@@ -108,6 +108,27 @@ def send_heartbeat_to_api(
     threading.Thread(target=_worker, daemon=True).start()
 
 
+def send_frame_to_api(
+    frame: np.ndarray,
+    camera_id: str = "cam_usb_0",
+    api_url: str = "http://localhost:8000/api/v1/cameras",
+) -> None:
+    """Send compressed JPEG frame asynchronously to local FastAPI streaming buffer."""
+    def _worker():
+        try:
+            _, buf = cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, 75])
+            with httpx.Client(timeout=0.6) as client:
+                client.post(
+                    f"{api_url}/{camera_id}/frame",
+                    content=buf.tobytes(),
+                    headers={"Content-Type": "image/jpeg"},
+                )
+        except Exception:
+            pass
+
+    threading.Thread(target=_worker, daemon=True).start()
+
+
 def create_zone_polygon(x1: float, y1: float, x2: float, y2: float) -> List[Tuple[float, float]]:
     """Helper to convert rectangular bounds into 4 clockwise polygon points."""
     min_x, max_x = min(x1, x2), max(x1, x2)
@@ -453,6 +474,10 @@ def main():
                         (255, 255, 255),
                         2,
                     )
+
+            # Stream frame to web dashboard (every 2 frames ~15 FPS)
+            if not args.no_api and (frame_id % 2 == 0):
+                send_frame_to_api(vis_frame)
 
             # Display frame
             cv2.imshow(window_name, vis_frame)

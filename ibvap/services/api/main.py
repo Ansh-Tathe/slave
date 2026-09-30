@@ -75,7 +75,6 @@ def create_app() -> FastAPI:
     # Also mount health/metrics at root for standard monitoring endpoints
     app.include_router(health.router)
 
-    # ── Serve Live Dashboard ──────────────────────────────────────────────────
     @app.get("/", response_class=HTMLResponse, include_in_schema=False)
     @app.get("/dashboard", response_class=HTMLResponse, include_in_schema=False)
     async def serve_dashboard():
@@ -83,6 +82,17 @@ def create_app() -> FastAPI:
             return FileResponse(DASHBOARD_FILE, media_type="text/html")
         return HTMLResponse(
             "<h1>IBVAP Command Center</h1><p>Dashboard UI file not found on server.</p>",
+            status_code=404,
+        )
+
+    @app.get("/camera", response_class=HTMLResponse, include_in_schema=False)
+    @app.get("/live", response_class=HTMLResponse, include_in_schema=False)
+    async def serve_camera_console():
+        cam_file = Path(__file__).resolve().parent / "dashboard" / "camera.html"
+        if cam_file.exists():
+            return FileResponse(cam_file, media_type="text/html")
+        return HTMLResponse(
+            "<h1>IBVAP Camera Console</h1><p>Camera UI file not found on server.</p>",
             status_code=404,
         )
 

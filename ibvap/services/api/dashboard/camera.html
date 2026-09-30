@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IBVAP — Live Camera Surveillance & Threat Console</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #070b13;
+      --bg-panel: rgba(14, 22, 38, 0.78);
+      --border-panel: rgba(255, 255, 255, 0.08);
+      --border-hover: rgba(56, 189, 248, 0.35);
+      --accent: #38bdf8;
+      --accent-glow: rgba(56, 189, 248, 0.35);
+      --critical: #ef4444;
+      --critical-glow: rgba(239, 68, 68, 0.45);
+      --high: #f97316;
+      --medium: #f59e0b;
+      --success: #10b981;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background-color: var(--bg-dark);
+      background-image: 
+        radial-gradient(at 0% 0%, rgba(56, 189, 248, 0.09) 0px, transparent 45%),
+        radial-gradient(at 100% 100%, rgba(239, 68, 68, 0.07) 0px, transparent 50%),
+        linear-gradient(180deg, #070b13 0%, #0c1322 100%);
+      color: var(--text-main);
+      font-family: 'Outfit', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Header */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 28px;
+      background: rgba(8, 14, 24, 0.88);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border-panel);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-logo {
+      width: 36px;
+      height: 36px;
+      border-radius: 9px;
+      background: linear-gradient(135deg, #0284c7, #38bdf8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 17px;
+      color: #fff;
+      box-shadow: 0 0 18px var(--accent-glow);
+    }
+
+    .brand-title {
+      font-size: 19px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+    }
+
+    .brand-badge {
+      font-size: 11px;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--accent);
+      background: rgba(56, 189, 248, 0.12);
+      padding: 2px 8px;
+      border-radius: 4px;
+      border: 1px solid rgba(56, 189, 248, 0.25);
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .live-indicator {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: #34d399;
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      padding: 6px 12px;
+      border-radius: 20px;
+    }
+
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #34d399;
+      box-shadow: 0 0 8px #34d399;
+      animation: pulse 1.4s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(0.8); opacity: 0.4; }
+    }
+
+    .btn {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--border-panel);
+      color: var(--text-main);
+      padding: 7px 15px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+      font-family: 'Outfit', sans-serif;
+      text-decoration: none;
+    }
+
+    .btn:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: var(--border-hover);
+    }
+
+    .btn-primary {
+      background: #0284c7;
+      border-color: #38bdf8;
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background: #0369a1;
+      box-shadow: 0 0 14px var(--accent-glow);
+    }
+
+    .btn-danger {
+      background: rgba(239, 68, 68, 0.2);
+      border-color: rgba(239, 68, 68, 0.4);
+      color: #fca5a5;
+    }
+
+    .btn-danger:hover {
+      background: rgba(239, 68, 68, 0.35);
+      box-shadow: 0 0 14px var(--critical-glow);
+    }
+
+    /* Main Container */
+    main {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      gap: 20px;
+      padding: 20px 28px;
+      max-width: 1700px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    @media (max-width: 1100px) {
+      main {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Video Player Viewport */
+    .viewport-panel {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-panel);
+      border-radius: 16px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+    }
+
+    .viewport-header {
+      padding: 12px 20px;
+      border-bottom: 1px solid var(--border-panel);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .cam-meta {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .cam-name {
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+    }
+
+    .hud-tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: var(--text-muted);
+    }
+
+    .video-container {
+      position: relative;
+      width: 100%;
+      background: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 480px;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    #streamImg {
+      width: 100%;
+      max-height: 640px;
+      object-fit: contain;
+      display: block;
+    }
+
+    #localVideo {
+      width: 100%;
+      max-height: 640px;
+      object-fit: contain;
+      display: none;
+      transform: scaleX(-1);
+    }
+
+    /* Interactive Zone Drawing Canvas Overlay */
+    #zoneCanvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      cursor: crosshair;
+      z-index: 10;
+    }
+
+    /* Live Video Controls Bar */
+    .viewport-controls {
+      padding: 14px 20px;
+      border-top: 1px solid var(--border-panel);
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      background: rgba(8, 14, 24, 0.5);
+    }
+
+    .controls-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .zone-presets {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .zone-btn {
+      font-size: 12px;
+      padding: 5px 10px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border-panel);
+      color: var(--text-muted);
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: 'JetBrains Mono', monospace;
+      transition: all 0.15s;
+    }
+
+    .zone-btn:hover, .zone-btn.active {
+      background: rgba(56, 189, 248, 0.18);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    /* Alert & Threat Feed Panel */
+    .sidebar-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .threat-card {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-panel);
+      border-radius: 14px;
+      overflow: hidden;
+      backdrop-filter: blur(12px);
+    }
+
+    .threat-card.critical {
+      border-color: rgba(239, 68, 68, 0.5);
+      box-shadow: 0 0 24px rgba(239, 68, 68, 0.2);
+    }
+
+    .card-header {
+      padding: 12px 18px;
+      border-bottom: 1px solid var(--border-panel);
+      font-size: 14px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .feed-list {
+      max-height: 480px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .feed-item {
+      padding: 12px 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      transition: background 0.15s;
+      animation: fadeIn 0.3s ease-out;
+    }
+
+    .feed-item:hover {
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .item-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .badge-sev {
+      font-size: 10px;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+      padding: 2px 7px;
+      border-radius: 4px;
+      letter-spacing: 0.5px;
+    }
+
+    .badge-critical { background: rgba(239, 68, 68, 0.25); color: #fca5a5; border: 1px solid #ef4444; }
+    .badge-high { background: rgba(249, 115, 22, 0.25); color: #fdba74; border: 1px solid #f97316; }
+    .badge-medium { background: rgba(245, 158, 11, 0.25); color: #fde047; border: 1px solid #f59e0b; }
+
+    .item-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .item-meta {
+      font-size: 11px;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text-muted);
+    }
+
+    .item-weapon {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #f87171;
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-top: 4px;
+    }
+
+    /* Zone Info Box */
+    .zone-info-card {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-panel);
+      border-radius: 14px;
+      padding: 16px;
+      font-size: 13px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      color: var(--text-muted);
+    }
+
+    .info-val {
+      color: var(--text-main);
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 600;
+    }
+
+    /* Modal for snapshots */
+    .snap-reel {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding: 8px 0;
+    }
+
+    .snap-thumb {
+      width: 70px;
+      height: 50px;
+      border-radius: 6px;
+      object-fit: cover;
+      border: 1px solid var(--border-panel);
+      cursor: pointer;
+      transition: transform 0.15s;
+    }
+
+    .snap-thumb:hover {
+      transform: scale(1.08);
+      border-color: var(--accent);
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <div class="brand-logo">&#x1F6E1;</div>
+      <div>
+        <div class="brand-title">IBVAP <span class="brand-badge">LIVE SURVEILLANCE</span></div>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <div class="live-indicator">
+        <div class="pulse-dot"></div>
+        <span id="connStatus">CONNECTING</span>
+      </div>
+      <a href="/dashboard" class="btn">&#x2190; Operations Dashboard</a>
+      <a href="/docs" target="_blank" class="btn">&#x1F4D6; API Docs</a>
+    </div>
+  </header>
+
+  <main>
+    <!-- Viewport Panel -->
+    <section class="viewport-panel">
+      <div class="viewport-header">
+        <div class="cam-meta">
+          <div class="cam-name">&#x1F4F9; Laptop Camera 0 (cam_usb_0)</div>
+          <span class="hud-tag" id="hudFps">FPS: --</span>
+          <span class="hud-tag" id="hudMode">MODE: SERVER AI STREAM</span>
+        </div>
+        <div class="controls-group">
+          <button class="btn" id="btnToggleSource" onclick="toggleCameraSource()">Switch to Browser Webcam</button>
+          <button class="btn btn-primary" id="btnSnapshot" onclick="captureSnapshot()">&#x1F4F7; Snapshot</button>
+        </div>
+      </div>
+
+      <!-- Video & Interactive Overlay -->
+      <div class="video-container" id="videoWrapper">
+        <!-- Server Stream -->
+        <img id="streamImg" src="/api/v1/cameras/cam_usb_0/stream" alt="Live Surveillance Stream" onerror="handleStreamError()" onload="handleStreamLoaded()" />
+        
+        <!-- Direct In-Browser Webcam Feed -->
+        <video id="localVideo" autoplay playsinline muted></video>
+
+        <!-- HTML5 Canvas for Interactive Zone Editing -->
+        <canvas id="zoneCanvas"></canvas>
+      </div>
+
+      <!-- Controls & Zone Presets -->
+      <div class="viewport-controls">
+        <div class="controls-group">
+          <span style="font-size: 13px; color: var(--text-muted); font-weight: 600;">RESTRICTION ZONE:</span>
+          <div class="zone-presets">
+            <button class="zone-btn active" id="btnZoneLeft" onclick="setZonePreset('left')">LEFT</button>
+            <button class="zone-btn" id="btnZoneRight" onclick="setZonePreset('right')">RIGHT</button>
+            <button class="zone-btn" id="btnZoneCenter" onclick="setZonePreset('center')">CENTER</button>
+            <button class="zone-btn" id="btnZoneFull" onclick="setZonePreset('full')">FULL</button>
+          </div>
+        </div>
+
+        <div class="controls-group">
+          <button class="btn" id="btnEditZone" onclick="toggleZoneDrawMode()">&#x270F;&#xFE0F; Drag-to-Draw Zone</button>
+          <button class="btn btn-primary" onclick="syncZoneToBackend()">&#x2714;&#xFE0F; Apply to Core</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Sidebar: Threat Alerts & Controls -->
+    <aside class="sidebar-panel">
+      <!-- Live Threats Card -->
+      <div class="threat-card" id="threatCard">
+        <div class="card-header">
+          <span>&#x26A0;&#xFE0F; Real-Time Threats & Alerts</span>
+          <span class="hud-tag" id="alertCount">0 Alerts</span>
+        </div>
+        <div class="feed-list" id="alertsFeed">
+          <div style="padding: 24px 16px; text-align: center; color: var(--text-muted); font-size: 13px;">
+            Awaiting real-time intrusion and weapon alerts...
+          </div>
+        </div>
+      </div>
+
+      <!-- Zone Coordinates Information -->
+      <div class="zone-info-card">
+        <div style="font-weight: 600; font-size: 14px; margin-bottom: 4px;">&#x1F4D0; Active Restriction Zone Boundary</div>
+        <div class="info-row">
+          <span>Preset / Mode:</span>
+          <span class="info-val" id="zonePresetName">LEFT SECTOR</span>
+        </div>
+        <div class="info-row">
+          <span>Coordinates (Norm):</span>
+          <span class="info-val" id="zoneCoords">[0.05, 0.15] to [0.48, 0.85]</span>
+        </div>
+        <div class="info-row">
+          <span>Threat Detection:</span>
+          <span class="info-val" style="color: #4ade80;">FIREARMS & MELEE ACTIVE</span>
+        </div>
+        <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">
+          Tip: Click <b>Drag-to-Draw Zone</b>, then click and drag on the live camera display to set any customized restricted boundary.
+        </div>
+      </div>
+
+      <!-- Recent Snapshot Reel -->
+      <div class="threat-card">
+        <div class="card-header">
+          <span>&#x1F5BC;&#xFE0F; Captured Evidence Snaps</span>
+        </div>
+        <div style="padding: 12px;">
+          <div class="snap-reel" id="snapReel">
+            <span style="color: var(--text-muted); font-size: 12px;">No manual snapshots captured yet.</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <script>
+    // ── Application State ──────────────────────────────────────────────────────
+    let isLocalCam = false;
+    let localStream = null;
+    let isDrawingZone = false;
+    let dragStart = null;
+    let dragCurrent = null;
+
+    // Default normalized zone: Left (x1=0.05, y1=0.15, x2=0.48, y2=0.85)
+    let currentNormZone = { x1: 0.05, y1: 0.15, x2: 0.48, y2: 0.85 };
+
+    const streamImg = document.getElementById("streamImg");
+    const localVideo = document.getElementById("localVideo");
+    const zoneCanvas = document.getElementById("zoneCanvas");
+    const ctx = zoneCanvas.getContext("2d");
+    const connStatus = document.getElementById("connStatus");
+    const hudMode = document.getElementById("hudMode");
+    const hudFps = document.getElementById("hudFps");
+    const alertsFeed = document.getElementById("alertsFeed");
+    const alertCount = document.getElementById("alertCount");
+    const snapReel = document.getElementById("snapReel");
+    const btnEditZone = document.getElementById("btnEditZone");
+
+    let totalAlerts = 0;
+    let sseSource = null;
+
+    // ── Resize Canvas to Match Video Container ─────────────────────────────────
+    function resizeCanvas() {
+      const rect = zoneCanvas.parentElement.getBoundingClientRect();
+      zoneCanvas.width = rect.width;
+      zoneCanvas.height = rect.height;
+      drawZoneOverlay();
+    }
+    window.addEventListener("resize", resizeCanvas);
+
+    // ── Draw Restriction Zone Canvas Overlay ──────────────────────────────────
+    function drawZoneOverlay() {
+      ctx.clearRect(0, 0, zoneCanvas.width, zoneCanvas.height);
+      const w = zoneCanvas.width;
+      const h = zoneCanvas.height;
+
+      const px1 = currentNormZone.x1 * w;
+      const py1 = currentNormZone.y1 * h;
+      const px2 = currentNormZone.x2 * w;
+      const py2 = currentNormZone.y2 * h;
+
+      const zw = px2 - px1;
+      const zh = py2 - py1;
+
+      // Filled semi-transparent restricted zone
+      ctx.fillStyle = "rgba(239, 68, 68, 0.18)";
+      ctx.fillRect(px1, py1, zw, zh);
+
+      // Glowing border
+      ctx.strokeStyle = "#ef4444";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(px1, py1, zw, zh);
+
+      // Corner handles
+      ctx.fillStyle = "#f87171";
+      const cs = 7;
+      ctx.fillRect(px1 - cs/2, py1 - cs/2, cs, cs);
+      ctx.fillRect(px2 - cs/2, py1 - cs/2, cs, cs);
+      ctx.fillRect(px2 - cs/2, py2 - cs/2, cs, cs);
+      ctx.fillRect(px1 - cs/2, py2 - cs/2, cs, cs);
+
+      // Label banner
+      ctx.fillStyle = "rgba(239, 68, 68, 0.85)";
+      ctx.fillRect(px1, Math.max(0, py1 - 22), 160, 22);
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "bold 11px Outfit, sans-serif";
+      ctx.fillText("RESTRICTED ZONE", px1 + 8, Math.max(14, py1 - 6));
+
+      // Draw active dragging box preview
+      if (dragStart && dragCurrent) {
+        const dx = Math.min(dragStart.x, dragCurrent.x);
+        const dy = Math.min(dragStart.y, dragCurrent.y);
+        const dw = Math.abs(dragCurrent.x - dragStart.x);
+        const dh = Math.abs(dragCurrent.y - dragStart.y);
+
+        ctx.strokeStyle = "#eab308";
+        ctx.lineWidth = 2;
+        ctx.setLineDash([6, 4]);
+        ctx.strokeRect(dx, dy, dw, dh);
+        ctx.setLineDash([]);
+
+        ctx.fillStyle = "rgba(234, 179, 8, 0.2)";
+        ctx.fillRect(dx, dy, dw, dh);
+      }
+    }
+
+    // ── Mouse Drag Zone Drawing ───────────────────────────────────────────────
+    function toggleZoneDrawMode() {
+      isDrawingZone = !isDrawingZone;
+      if (isDrawingZone) {
+        btnEditZone.style.background = "#eab308";
+        btnEditZone.style.color = "#000";
+        btnEditZone.innerText = "Drawing: Drag on Video (Click to Stop)";
+      } else {
+        btnEditZone.style.background = "";
+        btnEditZone.style.color = "";
+        btnEditZone.innerText = "✏️ Drag-to-Draw Zone";
+      }
+    }
+
+    zoneCanvas.addEventListener("mousedown", (e) => {
+      if (!isDrawingZone) return;
+      const rect = zoneCanvas.getBoundingClientRect();
+      dragStart = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+      dragCurrent = { ...dragStart };
+      drawZoneOverlay();
+    });
+
+    zoneCanvas.addEventListener("mousemove", (e) => {
+      if (!dragStart) return;
+      const rect = zoneCanvas.getBoundingClientRect();
+      dragCurrent = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+      drawZoneOverlay();
+    });
+
+    zoneCanvas.addEventListener("mouseup", (e) => {
+      if (!dragStart) return;
+      const rect = zoneCanvas.getBoundingClientRect();
+      const x2 = e.clientX - rect.left;
+      const y2 = e.clientY - rect.top;
+      const x1 = dragStart.x;
+      const y1 = dragStart.y;
+
+      dragStart = null;
+      dragCurrent = null;
+
+      if (Math.abs(x2 - x1) > 20 && Math.abs(y2 - y1) > 20) {
+        const w = zoneCanvas.width;
+        const h = zoneCanvas.height;
+
+        currentNormZone = {
+          x1: Math.max(0, Math.min(1, Math.min(x1, x2) / w)),
+          y1: Math.max(0, Math.min(1, Math.min(y1, y2) / h)),
+          x2: Math.max(0, Math.min(1, Math.max(x1, x2) / w)),
+          y2: Math.max(0, Math.min(1, Math.max(y1, y2) / h)),
+        };
+
+        document.getElementById("zonePresetName").innerText = "CUSTOM USER DRAG";
+        document.getElementById("zoneCoords").innerText = 
+          `[${currentNormZone.x1.toFixed(2)}, ${currentNormZone.y1.toFixed(2)}] to [${currentNormZone.x2.toFixed(2)}, ${currentNormZone.y2.toFixed(2)}]`;
+
+        document.querySelectorAll(".zone-btn").forEach(b => b.classList.remove("active"));
+        syncZoneToBackend();
+      }
+
+      isDrawingZone = false;
+      btnEditZone.style.background = "";
+      btnEditZone.style.color = "";
+      btnEditZone.innerText = "✏️ Drag-to-Draw Zone";
+      drawZoneOverlay();
+    });
+
+    // ── Zone Presets ──────────────────────────────────────────────────────────
+    function setZonePreset(name) {
+      document.querySelectorAll(".zone-btn").forEach(b => b.classList.remove("active"));
+      if (name === "left") {
+        currentNormZone = { x1: 0.05, y1: 0.15, x2: 0.48, y2: 0.85 };
+        document.getElementById("btnZoneLeft").classList.add("active");
+        document.getElementById("zonePresetName").innerText = "LEFT SECTOR";
+      } else if (name === "right") {
+        currentNormZone = { x1: 0.52, y1: 0.15, x2: 0.95, y2: 0.85 };
+        document.getElementById("btnZoneRight").classList.add("active");
+        document.getElementById("zonePresetName").innerText = "RIGHT SECTOR";
+      } else if (name === "center") {
+        currentNormZone = { x1: 0.25, y1: 0.20, x2: 0.75, y2: 0.80 };
+        document.getElementById("btnZoneCenter").classList.add("active");
+        document.getElementById("zonePresetName").innerText = "CENTER CHOKEPOINT";
+      } else if (name === "full") {
+        currentNormZone = { x1: 0.05, y1: 0.05, x2: 0.95, y2: 0.95 };
+        document.getElementById("btnZoneFull").classList.add("active");
+        document.getElementById("zonePresetName").innerText = "FULL PERIMETER";
+      }
+
+      document.getElementById("zoneCoords").innerText = 
+        `[${currentNormZone.x1.toFixed(2)}, ${currentNormZone.y1.toFixed(2)}] to [${currentNormZone.x2.toFixed(2)}, ${currentNormZone.y2.toFixed(2)}]`;
+
+      drawZoneOverlay();
+      syncZoneToBackend();
+    }
+
+    async function syncZoneToBackend() {
+      const z = currentNormZone;
+      const polygon = [
+        [z.x1, z.y1],
+        [z.x2, z.y1],
+        [z.x2, z.y2],
+        [z.x1, z.y2],
+      ];
+
+      try {
+        const res = await fetch("/api/v1/cameras/cam_usb_0/zone", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ polygon }),
+        });
+        if (res.ok) {
+          console.log("Restriction zone updated on core engine:", polygon);
+        }
+      } catch (err) {
+        console.warn("Could not sync zone with backend:", err);
+      }
+    }
+
+    // ── Toggle Source: Server AI Stream vs Direct In-Browser Webcam ───────────
+    async function toggleCameraSource() {
+      const btn = document.getElementById("btnToggleSource");
+      if (!isLocalCam) {
+        // Activate Local Browser Webcam
+        try {
+          localStream = await navigator.mediaDevices.getUserMedia({
+            video: { width: { ideal: 1280 }, height: { ideal: 720 } },
+          });
+          localVideo.srcObject = localStream;
+          localVideo.style.display = "block";
+          streamImg.style.display = "none";
+          isLocalCam = true;
+          btn.innerText = "Switch to Server AI Stream";
+          hudMode.innerText = "MODE: DIRECT BROWSER WEBCAM";
+          connStatus.innerText = "LOCAL WEBCAM ACTIVE";
+          resizeCanvas();
+        } catch (err) {
+          alert("Cannot access webcam from browser: " + err.message);
+        }
+      } else {
+        // Switch back to Server AI Stream
+        if (localStream) {
+          localStream.getTracks().forEach(t => t.stop());
+          localStream = null;
+        }
+        localVideo.style.display = "none";
+        streamImg.style.display = "block";
+        streamImg.src = "/api/v1/cameras/cam_usb_0/stream?t=" + Date.now();
+        isLocalCam = false;
+        btn.innerText = "Switch to Browser Webcam";
+        hudMode.innerText = "MODE: SERVER AI STREAM";
+        connStatus.innerText = "SERVER STREAM ONLINE";
+        resizeCanvas();
+      }
+    }
+
+    function handleStreamLoaded() {
+      connStatus.innerText = "AI STREAM ONLINE";
+      hudFps.innerText = "FPS: 15.0";
+      resizeCanvas();
+    }
+
+    function handleStreamError() {
+      connStatus.innerText = "WAITING FOR PIPELINE";
+      connStatus.style.color = "#f59e0b";
+      resizeCanvas();
+    }
+
+    // ── Snapshot Capture ──────────────────────────────────────────────────────
+    function captureSnapshot() {
+      const snapCanvas = document.createElement("canvas");
+      const videoEl = isLocalCam ? localVideo : streamImg;
+
+      snapCanvas.width = videoEl.videoWidth || videoEl.naturalWidth || 640;
+      snapCanvas.height = videoEl.videoHeight || videoEl.naturalHeight || 480;
+
+      const sctx = snapCanvas.getContext("2d");
+      sctx.drawImage(videoEl, 0, 0, snapCanvas.width, snapCanvas.height);
+
+      const dataUrl = snapCanvas.toDataURL("image/jpeg", 0.9);
+
+      // Append to reel
+      if (snapReel.querySelector("span")) {
+        snapReel.innerHTML = "";
+      }
+      const img = document.createElement("img");
+      img.src = dataUrl;
+      img.className = "snap-thumb";
+      img.title = "Click to download snapshot";
+      img.onclick = () => {
+        const a = document.createElement("a");
+        a.href = dataUrl;
+        a.download = `IBVAP_Evidence_${Date.now()}.jpg`;
+        a.click();
+      };
+      snapReel.prepend(img);
+    }
+
+    // ── Real-Time SSE Alert Consumer ──────────────────────────────────────────
+    function connectSSE() {
+      sseSource = new EventSource("/api/v1/events/stream");
+
+      sseSource.onopen = () => {
+        console.log("Connected to IBVAP Live Alert Stream (SSE)");
+      };
+
+      sseSource.onmessage = (e) => {
+        try {
+          const ev = JSON.parse(e.data);
+          addAlertItem(ev);
+        } catch (err) {
+          console.error("Error parsing event stream:", err);
+        }
+      };
+
+      sseSource.onerror = () => {
+        sseSource.close();
+        setTimeout(connectSSE, 3000);
+      };
+    }
+
+    function addAlertItem(ev) {
+      totalAlerts++;
+      alertCount.innerText = `${totalAlerts} Alerts`;
+
+      if (alertsFeed.querySelector("div[style*='Awaiting']")) {
+        alertsFeed.innerHTML = "";
+      }
+
+      const item = document.createElement("div");
+      item.className = "feed-item";
+
+      const sev = (ev.severity || "MEDIUM").toUpperCase();
+      const sevClass = sev === "CRITICAL" ? "badge-critical" : (sev === "HIGH" ? "badge-high" : "badge-medium");
+
+      let weaponTag = "";
+      if (ev.event_type === "ARMED_PERSON" || ev.event_type === "WEAPON_DETECTED" || ev.metadata?.weapon) {
+        const wName = (ev.metadata?.weapon || "FIREARM").toUpperCase();
+        weaponTag = `<div class="item-weapon">⚠️ ARMED TARGET: ${wName}</div>`;
+      }
+
+      const timeStr = new Date(ev.timestamp ? ev.timestamp * 1000 : Date.now()).toLocaleTimeString();
+
+      item.innerHTML = `
+        <div class="item-top">
+          <span class="badge-sev ${sevClass}">${sev}</span>
+          <span class="item-meta">${timeStr}</span>
+        </div>
+        <div class="item-title">${ev.event_type} — Track #${ev.track_id || (ev.track?.track_id ?? 'Perimeter')}</div>
+        <div class="item-meta">Zone: ${ev.zone_id || 'perimeter'} | Cam: ${ev.camera_id}</div>
+        ${weaponTag}
+      `;
+
+      alertsFeed.prepend(item);
+
+      // Keep max 25 items in DOM
+      if (alertsFeed.children.length > 25) {
+        alertsFeed.removeChild(alertsFeed.lastChild);
+      }
+    }
+
+    // Initial setup
+    window.onload = () => {
+      resizeCanvas();
+      connectSSE();
+    };
+  </script>
+</body>
+</html>

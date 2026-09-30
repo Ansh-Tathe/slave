@@ -272,6 +272,23 @@ class SSEBroadcaster:
         return len(self._subscribers)
 
 
+class CameraFrameBuffer:
+    """Stores latest encoded JPEG frames for live HTTP MJPEG streaming."""
+    def __init__(self) -> None:
+        self._frames: Dict[str, bytes] = {}
+        self._timestamps: Dict[str, float] = {}
+
+    def set_frame(self, camera_id: str, jpeg_bytes: bytes) -> None:
+        self._frames[camera_id] = jpeg_bytes
+        self._timestamps[camera_id] = time.time()
+
+    def get_frame(self, camera_id: str) -> Optional[bytes]:
+        return self._frames.get(camera_id)
+
+    def get_age(self, camera_id: str) -> float:
+        return time.time() - self._timestamps.get(camera_id, 0.0)
+
+
 class AppState:
     """Global singleton state for IBVAP API."""
 
@@ -281,6 +298,7 @@ class AppState:
         self.camera_registry = CameraRegistry()
         self.watchlist_store = WatchlistStore()
         self.sse = SSEBroadcaster()
+        self.frame_buffer = CameraFrameBuffer()
         self.webhooks: Dict[str, WebhookResponse] = {}
         self.webhook_deliveries_total: int = 0
         self.webhook_failures_total: int = 0
