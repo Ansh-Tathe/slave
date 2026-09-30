@@ -82,9 +82,9 @@ class ByteTracker:
     def update(
         self,
         frame:     np.ndarray,
-        frame_id:  int,
-        camera_id: str,
-        timestamp: float,
+        frame_id:  int = 0,
+        camera_id: str = "cam_01",
+        timestamp: Optional[float] = None,
     ) -> List[Track]:
         """
         Run detection + tracking on a single BGR frame.
@@ -101,6 +101,9 @@ class ByteTracker:
         List[Track]
             Active tracks in this frame.  May be empty.
         """
+        import time as _t
+        ts = timestamp if timestamp is not None else _t.time()
+
         results = self._model.track(
             frame,
             persist=True,               # keep Kalman state between calls
@@ -114,7 +117,7 @@ class ByteTracker:
             verbose=False,
         )
 
-        return self._parse_results(results, frame_id, camera_id, timestamp)
+        return self._parse_results(results, frame_id, camera_id, ts)
 
     def reset(self) -> None:
         """Reset tracker state (call when switching cameras or after a gap)."""

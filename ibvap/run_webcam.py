@@ -356,7 +356,7 @@ def main():
                     fps_estimate = 0.9 * fps_estimate + 0.1 * (1.0 / dt)
 
                 # 1. Detection + Tracking
-                tracks = tracker.update(frame, frame_id=frame_id)
+                tracks = tracker.update(frame, frame_id=frame_id, camera_id="cam_usb_0", timestamp=now)
 
                 # 2. Virtual Fence / Tripwires
                 fence_events = fence.update(tracks, frame_id=frame_id)
