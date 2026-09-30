@@ -47,6 +47,10 @@ class EventType(str, Enum):
     FACE_DETECTED   = "FACE_DETECTED"
     FACE_WATCHLIST  = "FACE_WATCHLIST"
 
+    # Threat & Weapons (Harmful objects)
+    WEAPON_DETECTED = "WEAPON_DETECTED"
+    ARMED_PERSON    = "ARMED_PERSON"
+
 
 class Severity(str, Enum):
     CRITICAL = "CRITICAL"
