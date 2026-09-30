@@ -160,7 +160,15 @@ class WeaponDetector:
                         severity=Severity.HIGH,
                         camera_id=self.camera_id,
                         zone_id="perimeter",
-                        track=None,
+                        track=Track(
+                            track_id=-1,
+                            bbox=wd.bbox,
+                            conf=wd.conf,
+                            class_id=99,
+                            class_name=wd.class_name,
+                            frame_id=frame_id,
+                            camera_id=self.camera_id,
+                        ),
                         frame_id=frame_id,
                         metadata={
                             "weapon": wd.class_name,

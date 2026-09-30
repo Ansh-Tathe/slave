@@ -104,9 +104,10 @@ class EventEngine:
                 logger.warning("Event rate limit reached — dropping events this second")
                 break
 
+            track_id = evt.track.track_id if evt.track is not None else -1
             key: _DedupKey = (
                 evt.event_type.value,
-                evt.track.track_id,
+                track_id,
                 evt.zone_id,
             )
 
@@ -154,10 +155,19 @@ class EventEngine:
         try:
             h, w = frame.shape[:2]
             pad  = self._snap_padding
-            x1   = max(0, int(evt.track.bbox[0]) - pad)
-            y1   = max(0, int(evt.track.bbox[1]) - pad)
-            x2   = min(w, int(evt.track.bbox[2]) + pad)
-            y2   = min(h, int(evt.track.bbox[3]) + pad)
+            if evt.track is not None and evt.track.bbox is not None:
+                x1   = max(0, int(evt.track.bbox[0]) - pad)
+                y1   = max(0, int(evt.track.bbox[1]) - pad)
+                x2   = min(w, int(evt.track.bbox[2]) + pad)
+                y2   = min(h, int(evt.track.bbox[3]) + pad)
+            elif "weapon_bbox" in evt.metadata:
+                wb = evt.metadata["weapon_bbox"]
+                x1   = max(0, int(wb[0]) - pad)
+                y1   = max(0, int(wb[1]) - pad)
+                x2   = min(w, int(wb[2]) + pad)
+                y2   = min(h, int(wb[3]) + pad)
+            else:
+                x1, y1, x2, y2 = 0, 0, w, h
 
             if x2 <= x1 or y2 <= y1:
                 return None
