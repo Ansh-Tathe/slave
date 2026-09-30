@@ -1,0 +1,192 @@
+# =============================================================================
+# ibvap/configs/rules.yaml
+# Alert rules, deduplication, severity mapping, and notification routing.
+# Consumed by services/event_engine/ in P2.
+# =============================================================================
+
+# ── Global event engine settings ─────────────────────────────────────────────
+event_engine:
+  dedup_window_s: 30          # suppress duplicate events of same type + track ID
+  max_events_per_second: 50   # rate-limit to prevent alert storm
+  snapshot:
+    enabled: true
+    quality: 85               # JPEG quality (0-100)
+    padding_px: 30            # extra pixels around bounding box in snapshot
+  clip:
+    enabled: true
+    pre_event_s: 3            # seconds of video before the event trigger
+    post_event_s: 5           # seconds of video after the event trigger
+    codec: "h264"             # h264 | h265
+    max_clip_duration_s: 60   # hard cap to avoid huge files
+
+# ── Severity levels ───────────────────────────────────────────────────────────
+severity_levels:
+  CRITICAL:
+    color: "#FF0000"
+    sound: true
+    auto_clip: true
+    notify_channels: [dashboard, webhook, sms]
+  HIGH:
+    color: "#FF6600"
+    sound: true
+    auto_clip: true
+    notify_channels: [dashboard, webhook]
+  MEDIUM:
+    color: "#FFCC00"
+    sound: false
+    auto_clip: false
+    notify_channels: [dashboard]
+  LOW:
+    color: "#00AAFF"
+    sound: false
+    auto_clip: false
+    notify_channels: [dashboard]
+
+# ── Alert rules ───────────────────────────────────────────────────────────────
+rules:
+
+  # -- Intrusion / fence --
+  - id: rule_border_crossing
+    name: "Border Line Crossing"
+    event_type: TRIPWIRE_CROSS
+    tripwire_id: wire_border_line
+    severity: CRITICAL
+    enabled: true
+    confirmation_required: false   # auto-alert without operator confirmation
+
+  - id: rule_restricted_entry
+    name: "Restricted Zone Entry"
+    event_type: ZONE_ENTER
+    zone_id: zone_restricted_north
+    severity: HIGH
+    enabled: true
+    confirmation_required: false
+
+  - id: rule_vehicle_bay_loiter
+    name: "Vehicle Loitering in Bay"
+    event_type: DWELL
+    zone_id: zone_vehicle_bay
+    dwell_seconds: 120
+    severity: MEDIUM
+    enabled: true
+    confirmation_required: true    # operator must confirm
+
+  # -- Behaviour --
+  - id: rule_loitering_person
+    name: "Person Loitering"
+    event_type: LOITERING
+    classes: [person]
+    dwell_seconds: 60
+    severity: MEDIUM
+    enabled: true
+    confirmation_required: true
+
+  - id: rule_running
+    name: "Running (high-speed movement)"
+    event_type: RUNNING
+    classes: [person]
+    speed_threshold_px_per_s: 150   # tuned per camera resolution/FPS
+    severity: MEDIUM
+    enabled: true
+    confirmation_required: false
+
+  - id: rule_group_gathering
+    name: "Group Gathering (>= 5 persons)"
+    event_type: GATHERING
+    classes: [person]
+    min_count: 5
+    proximity_px: 200
+    duration_s: 10
+    severity: HIGH
+    enabled: true
+    confirmation_required: false
+
+  - id: rule_abandoned_object
+    name: "Abandoned Object"
+    event_type: ABANDONED_OBJECT
+    stationary_seconds: 120
+    severity: HIGH
+    enabled: true
+    confirmation_required: true
+
+  - id: rule_wrong_way
+    name: "Wrong-Way Vehicle"
+    event_type: TRIPWIRE_CROSS
+    tripwire_id: wire_exit_gate
+    severity: HIGH
+    enabled: true
+    confirmation_required: false
+
+  # -- ANPR --
+  - id: rule_anpr_detected
+    name: "Number Plate Read"
+    event_type: ANPR_READ
+    severity: LOW
+    enabled: true
+    confirmation_required: false
+    log_only: true             # store to DB, no dashboard alert unless watchlisted
+
+  - id: rule_anpr_watchlist
+    name: "Watchlisted Plate Detected"
+    event_type: ANPR_WATCHLIST_HIT
+    severity: CRITICAL
+    enabled: true
+    confirmation_required: false
+
+  # -- Night --
+  - id: rule_night_movement
+    name: "Night-time Movement Detected"
+    event_type: NIGHT_MOVEMENT
+    severity: HIGH
+    enabled: true
+    hours: [20, 21, 22, 23, 0, 1, 2, 3, 4, 5]  # alert only during these hours (24h)
+    confirmation_required: false
+
+  # -- Face --
+  - id: rule_face_watchlist
+    name: "Watchlisted Face Detected"
+    event_type: FACE_WATCHLIST_HIT
+    severity: CRITICAL
+    min_confidence: 0.75       # never alert below this threshold
+    enabled: true
+    confirmation_required: true  # ALWAYS require operator confirmation for faces
+
+# ── Webhook destinations ──────────────────────────────────────────────────────
+webhooks:
+  - id: c2_primary
+    name: "C2 Command Centre"
+    url: "http://c2-server:8080/api/v1/ibvap-events"
+    method: POST
+    headers:
+      Content-Type: application/json
+      X-API-Key: "${C2_API_KEY}"   # loaded from .env
+    retry_attempts: 3
+    retry_delay_s: 2
+    events:                        # event types to forward (empty = all)
+      - TRIPWIRE_CROSS
+      - ZONE_ENTER
+      - ANPR_WATCHLIST_HIT
+      - FACE_WATCHLIST_HIT
+      - GATHERING
+      - ABANDONED_OBJECT
+    enabled: false                 # enable when C2 URL is configured
+
+# ── Model thresholds ──────────────────────────────────────────────────────────
+models:
+  detect:
+    conf_threshold: 0.40           # detection confidence
+    iou_threshold: 0.45            # NMS IoU
+    classes:                       # COCO class IDs to keep
+      - 0   # person
+      - 1   # bicycle
+      - 2   # car
+      - 3   # motorcycle
+      - 5   # bus
+      - 7   # truck
+  face:
+    conf_threshold: 0.60
+    quality_min: 0.50              # face quality score (blur, size, angle)
+  anpr:
+    plate_conf_threshold: 0.55
+    ocr_conf_threshold: 0.70
+    validate_indian_format: true   # regex validate IND plate format post-OCR

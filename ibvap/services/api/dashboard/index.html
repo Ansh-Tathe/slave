@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IBVAP — Command & Surveillance Console</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #080c14;
+      --card-bg: rgba(16, 24, 40, 0.75);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --card-hover: rgba(255, 255, 255, 0.12);
+      --accent: #38bdf8;
+      --accent-glow: rgba(56, 189, 248, 0.25);
+      --critical: #ef4444;
+      --high: #f97316;
+      --medium: #f59e0b;
+      --low: #10b981;
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background-color: var(--bg-dark);
+      background-image: 
+        radial-gradient(at 0% 0%, rgba(56, 189, 248, 0.08) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(239, 68, 68, 0.05) 0px, transparent 50%);
+      color: var(--text-main);
+      font-family: 'Outfit', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 28px;
+      border-bottom: 1px solid var(--card-border);
+      backdrop-filter: blur(12px);
+      background: rgba(8, 12, 20, 0.85);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-logo {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, #0ea5e9, #38bdf8);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 16px;
+      color: #fff;
+      box-shadow: 0 0 16px var(--accent-glow);
+    }
+
+    .brand-title {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+
+    .brand-sub {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .status-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      color: #34d399;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      background: #34d399;
+      border-radius: 50%;
+      box-shadow: 0 0 8px #34d399;
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+
+    .nav-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+      font-family: 'Outfit', sans-serif;
+    }
+
+    .btn:hover {
+      background: var(--card-hover);
+      border-color: rgba(255, 255, 255, 0.25);
+    }
+
+    .btn-primary {
+      background: #0284c7;
+      border-color: #38bdf8;
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background: #0369a1;
+      box-shadow: 0 0 12px var(--accent-glow);
+    }
+
+    main {
+      flex: 1;
+      padding: 24px 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* KPI Grid */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+    }
+
+    .kpi-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 16px 20px;
+      backdrop-filter: blur(8px);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      transition: transform 0.2s;
+    }
+
+    .kpi-card:hover {
+      transform: translateY(-2px);
+      border-color: var(--card-hover);
+    }
+
+    .kpi-label {
+      font-size: 13px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-weight: 600;
+    }
+
+    .kpi-value {
+      font-size: 30px;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .kpi-critical { color: var(--critical); text-shadow: 0 0 12px rgba(239, 68, 68, 0.3); }
+    .kpi-active { color: var(--low); text-shadow: 0 0 12px rgba(16, 185, 129, 0.3); }
+
+    /* Filters & Controls */
+    .filter-bar {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 12px 16px;
+      align-items: center;
+    }
+
+    .filter-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .filter-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    select, input[type="text"] {
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-family: 'Outfit', sans-serif;
+      outline: none;
+    }
+
+    select:focus, input[type="text"]:focus {
+      border-color: var(--accent);
+    }
+
+    /* Content Layout */
+    .dashboard-layout {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 20px;
+      flex: 1;
+    }
+
+    @media (max-width: 1024px) {
+      .dashboard-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .panel {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      backdrop-filter: blur(8px);
+    }
+
+    .panel-header {
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--card-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .panel-title {
+      font-size: 15px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .event-list {
+      flex: 1;
+      overflow-y: auto;
+      max-height: 600px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .event-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      transition: background 0.15s;
+      cursor: pointer;
+    }
+
+    .event-row:hover {
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .event-main {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .severity-pill {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-family: 'JetBrains Mono', monospace;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .sev-critical { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4); }
+    .sev-high { background: rgba(249, 115, 22, 0.2); color: #fb923c; border: 1px solid rgba(249, 115, 22, 0.4); }
+    .sev-medium { background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4); }
+    .sev-low { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); }
+
+    .event-details {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .event-title {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .event-meta {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .event-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .event-time {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .confirm-tag {
+      font-size: 11px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+    .confirmed-yes { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+    .confirmed-no { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+    .confirmed-pend { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+
+    /* Camera list panel */
+    .cam-list {
+      display: flex;
+      flex-direction: column;
+      padding: 12px;
+      gap: 10px;
+    }
+
+    .cam-card {
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 12px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .cam-name {
+      font-weight: 600;
+      font-size: 13px;
+    }
+
+    .cam-fps {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(4px);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-box {
+      background: #0f172a;
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      width: 90%;
+      max-width: 600px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-close {
+      cursor: pointer;
+      font-size: 20px;
+      color: var(--text-muted);
+    }
+
+    .modal-meta pre {
+      background: rgba(0, 0, 0, 0.5);
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-family: 'JetBrains Mono', monospace;
+      overflow-x: auto;
+      max-height: 200px;
+    }
+
+    .action-row {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+
+    .btn-confirm { background: #166534; border-color: #22c55e; color: #fff; }
+    .btn-reject { background: #991b1b; border-color: #ef4444; color: #fff; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <div class="brand-logo">IB</div>
+      <div>
+        <div class="brand-title">IBVAP Command Center</div>
+        <div class="brand-sub">INTELLIGENT BORDER VIDEO ANALYTICS PLATFORM</div>
+      </div>
+    </div>
+
+    <div style="display:flex; align-items:center; gap: 16px;">
+      <div class="status-badge" id="connStatus">
+        <div class="pulse-dot"></div>
+        <span>LIVE SSE CONNECTED</span>
+      </div>
+      <button class="btn btn-primary" id="btnSimulate">Simulate Alert</button>
+      <a class="btn" href="/docs" target="_blank">API Docs</a>
+    </div>
+  </header>
+
+  <main>
+    <!-- KPI Row -->
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-label">Total Events</div>
+        <div class="kpi-value" id="kpiTotal">0</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Critical Alerts</div>
+        <div class="kpi-value kpi-critical" id="kpiCritical">0</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Active Cameras</div>
+        <div class="kpi-value kpi-active" id="kpiCameras">0</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">System Uptime</div>
+        <div class="kpi-value" id="kpiUptime">0s</div>
+      </div>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+      <div class="filter-group">
+        <span class="filter-label">Severity:</span>
+        <select id="filterSeverity">
+          <option value="">All</option>
+          <option value="CRITICAL">Critical</option>
+          <option value="HIGH">High</option>
+          <option value="MEDIUM">Medium</option>
+          <option value="LOW">Low</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <span class="filter-label">Camera:</span>
+        <select id="filterCamera">
+          <option value="">All Cameras</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <span class="filter-label">Event Type:</span>
+        <select id="filterType">
+          <option value="">All Types</option>
+          <option value="TRIPWIRE_CROSS">Tripwire Cross</option>
+          <option value="ZONE_ENTER">Zone Enter</option>
+          <option value="LOITERING">Loitering</option>
+          <option value="ANPR_WATCHLIST_HIT">ANPR Watchlist</option>
+          <option value="FACE_WATCHLIST_HIT">Face Watchlist</option>
+          <option value="GATHERING">Gathering</option>
+          <option value="NIGHT_MOVEMENT">Night Movement</option>
+        </select>
+      </div>
+
+      <div class="filter-group" style="margin-left: auto; display: flex; gap: 8px;">
+        <input type="text" id="searchInput" placeholder="Search track, plate, class..." style="width: 200px;">
+        <input type="text" id="nlSearchInput" placeholder="Natural Language query (e.g. 'critical loitering near gate')..." style="width: 320px; border-color: #38bdf8;">
+        <button class="btn btn-primary" id="btnNLSearch" onclick="runNLSearch()">NL Search</button>
+      </div>
+    </div>
+
+    <!-- NL Search Explanation Chips -->
+    <div id="nlChipsBar" style="display:none; gap:8px; align-items:center; flex-wrap:wrap; font-size:12px; font-family:'JetBrains Mono',monospace;">
+      <span style="color:var(--text-muted);">Parsed Intent:</span>
+      <div id="nlChipsContainer" style="display:flex; gap:6px; flex-wrap:wrap;"></div>
+      <button class="btn" style="padding:2px 8px; font-size:11px;" onclick="clearNLSearch()">Clear</button>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="dashboard-layout">
+      <!-- Live Alert Feed -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">
+            <span>🔴 Live Surveillance Alert Feed</span>
+          </div>
+          <span style="font-size:12px; color:var(--text-muted);" id="feedCount">Showing 0 alerts</span>
+        </div>
+        <div class="event-list" id="eventList">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+
+      <!-- Cameras & System Panel -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">🎥 Cameras & Sensors</div>
+        </div>
+        <div class="cam-list" id="cameraList">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Event Review Modal -->
+  <div class="modal" id="reviewModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="modalTitle">Review Alert</h3>
+        <span class="modal-close" onclick="closeModal()">✕</span>
+      </div>
+      <div class="modal-meta" id="modalContent"></div>
+      <div class="action-row" style="justify-content: space-between;">
+        <button class="btn btn-primary" onclick="generateIncidentReport()">📄 Export Incident Dossier</button>
+        <div style="display:flex; gap:10px;">
+          <button class="btn btn-reject" onclick="reviewEvent(false)">Reject Alert</button>
+          <button class="btn btn-confirm" onclick="reviewEvent(true)">Confirm Alert</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let events = [];
+    let currentSelectedEventId = null;
+
+    // Fetch initial events and metrics
+    async function init() {
+      await fetchMetrics();
+      await fetchCameras();
+      await fetchEvents();
+      setupSSE();
+      setInterval(fetchMetrics, 5000);
+    }
+
+    async function fetchMetrics() {
+      try {
+        const res = await fetch('/api/v1/metrics');
+        if (!res.ok) return;
+        const data = await res.json();
+        document.getElementById('kpiTotal').innerText = data.total_events;
+        document.getElementById('kpiCritical').innerText = (data.events_by_severity.CRITICAL || 0);
+        document.getElementById('kpiCameras').innerText = `${data.active_cameras} / ${data.total_cameras}`;
+        const mins = Math.floor(data.uptime_s / 60);
+        document.getElementById('kpiUptime').innerText = `${mins}m ${Math.floor(data.uptime_s % 60)}s`;
+      } catch (e) {
+        console.error('Error fetching metrics', e);
+      }
+    }
+
+    async function fetchCameras() {
+      try {
+        const res = await fetch('/api/v1/cameras');
+        if (!res.ok) return;
+        const cams = await res.json();
+        const list = document.getElementById('cameraList');
+        const filterSelect = document.getElementById('filterCamera');
+        list.innerHTML = '';
+        
+        cams.forEach(c => {
+          // Camera card
+          const div = document.createElement('div');
+          div.className = 'cam-card';
+          const isOnline = c.status === 'ONLINE';
+          div.innerHTML = `
+            <div>
+              <div class="cam-name">${c.name || c.id}</div>
+              <div class="cam-fps">${c.source_type.toUpperCase()} • ${c.location || 'Border Zone'}</div>
+            </div>
+            <div style="text-align:right;">
+              <span class="severity-pill ${isOnline ? 'sev-low' : 'sev-critical'}">${c.status}</span>
+              <div class="cam-fps" style="margin-top:4px;">${c.fps.toFixed(1)} FPS</div>
+            </div>
+          `;
+          list.appendChild(div);
+
+          // Populate select filter
+          if (!Array.from(filterSelect.options).some(o => o.value === c.id)) {
+            const opt = document.createElement('option');
+            opt.value = c.id;
+            opt.innerText = c.name || c.id;
+            filterSelect.appendChild(opt);
+          }
+        });
+      } catch (e) {
+        console.error('Error fetching cameras', e);
+      }
+    }
+
+    async function fetchEvents() {
+      try {
+        const res = await fetch('/api/v1/events?limit=100');
+        if (!res.ok) return;
+        const data = await res.json();
+        events = data.events;
+        renderEvents();
+      } catch (e) {
+        console.error('Error fetching events', e);
+      }
+    }
+
+    function renderEvents() {
+      const list = document.getElementById('eventList');
+      const sevFilter = document.getElementById('filterSeverity').value;
+      const camFilter = document.getElementById('filterCamera').value;
+      const typeFilter = document.getElementById('filterType').value;
+      const search = document.getElementById('searchInput').value.toLowerCase();
+
+      list.innerHTML = '';
+
+      const filtered = events.filter(e => {
+        if (sevFilter && e.severity !== sevFilter) return false;
+        if (camFilter && e.camera_id !== camFilter) return false;
+        if (typeFilter && e.event_type !== typeFilter) return false;
+        if (search) {
+          const matchStr = `${e.event_type} ${e.camera_id} ${e.class_name} ${JSON.stringify(e.metadata)}`.toLowerCase();
+          if (!matchStr.includes(search)) return false;
+        }
+        return true;
+      });
+
+      document.getElementById('feedCount').innerText = `Showing ${filtered.length} alerts`;
+
+      if (filtered.length === 0) {
+        list.innerHTML = `<div style="padding:40px; text-align:center; color:var(--text-muted);">No events match the current filter criteria</div>`;
+        return;
+      }
+
+      filtered.forEach(ev => {
+        const row = document.createElement('div');
+        row.className = 'event-row';
+        row.onclick = () => openModal(ev);
+
+        const sevClass = `sev-${ev.severity.toLowerCase()}`;
+        const timeAgo = Math.max(0, Math.round((Date.now() / 1000) - ev.timestamp));
+
+        let confBadge = '';
+        if (ev.confirmed === true) confBadge = '<span class="confirm-tag confirmed-yes">CONFIRMED</span>';
+        else if (ev.confirmed === false) confBadge = '<span class="confirm-tag confirmed-no">REJECTED</span>';
+        else confBadge = '<span class="confirm-tag confirmed-pend">PENDING</span>';
+
+        row.innerHTML = `
+          <div class="event-main">
+            <span class="severity-pill ${sevClass}">${ev.severity}</span>
+            <div class="event-details">
+              <div class="event-title">${ev.event_type} • ${ev.class_name.toUpperCase()} (ID: ${ev.track_id})</div>
+              <div class="event-meta">Cam: ${ev.camera_id} ${ev.zone_id ? '• Zone: ' + ev.zone_id : ''} • Conf: ${(ev.confidence * 100).toFixed(0)}%</div>
+            </div>
+          </div>
+          <div class="event-right">
+            ${confBadge}
+            <div class="event-time">${timeAgo}s ago</div>
+          </div>
+        `;
+        list.appendChild(row);
+      });
+    }
+
+    function setupSSE() {
+      const evtSource = new EventSource('/api/v1/events/stream');
+      const badge = document.getElementById('connStatus');
+
+      evtSource.onmessage = function(e) {
+        if (!e.data || e.data.startsWith(':')) return;
+        try {
+          const newEvent = JSON.parse(e.data);
+          // Check if it exists to update or prepend
+          const idx = events.findIndex(x => x.event_id === newEvent.event_id);
+          if (idx >= 0) {
+            events[idx] = newEvent;
+          } else {
+            events.unshift(newEvent);
+            fetchMetrics();
+          }
+          renderEvents();
+        } catch (err) {
+          console.error('SSE JSON error', err);
+        }
+      };
+
+      evtSource.onerror = function() {
+        badge.innerHTML = `<span style="color:#ef4444;">● OFFLINE / RECONNECTING</span>`;
+      };
+
+      evtSource.onopen = function() {
+        badge.innerHTML = `<div class="pulse-dot"></div><span>LIVE SSE CONNECTED</span>`;
+      };
+    }
+
+    function openModal(ev) {
+      currentSelectedEventId = ev.event_id;
+      document.getElementById('modalTitle').innerText = `${ev.event_type} — ${ev.event_id.slice(0, 8)}`;
+      document.getElementById('modalContent').innerHTML = `
+        <pre>${JSON.stringify(ev, null, 2)}</pre>
+      `;
+      document.getElementById('reviewModal').style.display = 'flex';
+    }
+
+    function closeModal() {
+      document.getElementById('reviewModal').style.display = 'none';
+      currentSelectedEventId = null;
+    }
+
+    async function reviewEvent(confirmed) {
+      if (!currentSelectedEventId) return;
+      try {
+        await fetch(`/api/v1/events/${currentSelectedEventId}/confirm`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-API-Key': 'ibvap-c2-secure-api-key-default'
+          },
+          body: JSON.stringify({
+            confirmed: confirmed,
+            notes: `Operator decision: ${confirmed ? 'CONFIRMED' : 'REJECTED'}`
+          })
+        });
+        closeModal();
+      } catch (err) {
+        alert('Error updating event confirmation: ' + err);
+      }
+    }
+
+    // Simulate alert button
+    document.getElementById('btnSimulate').onclick = async function() {
+      const types = ['TRIPWIRE_CROSS', 'LOITERING', 'ZONE_ENTER', 'FACE_WATCHLIST_HIT', 'ANPR_WATCHLIST_HIT'];
+      const randomType = types[Math.floor(Math.random() * types.length)];
+      const randomSev = randomType.includes('WATCHLIST') ? 'CRITICAL' : 'HIGH';
+
+      const payload = {
+        event_type: randomType,
+        severity: randomSev,
+        camera_id: 'cam_01',
+        track_id: Math.floor(Math.random() * 500) + 1,
+        class_name: randomType.includes('ANPR') ? 'car' : 'person',
+        confidence: 0.94,
+        timestamp: Date.now() / 1000,
+        metadata: {
+          simulated: true,
+          demo_note: 'Real-time alert triggered from dashboard'
+        }
+      };
+
+      await fetch('/api/v1/events', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+    };
+
+    async function runNLSearch() {
+      const q = document.getElementById('nlSearchInput').value.trim();
+      if (!q) return;
+
+      try {
+        const res = await fetch('/api/v1/search/nl', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: q, limit: 100 })
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+
+        // Render explanation chips
+        const chipsBar = document.getElementById('nlChipsBar');
+        const container = document.getElementById('nlChipsContainer');
+        container.innerHTML = '';
+
+        if (data.parsed.event_types && data.parsed.event_types.length) {
+          container.innerHTML += `<span class="severity-pill sev-high">Type: ${data.parsed.event_types.join(', ')}</span>`;
+        }
+        if (data.parsed.severities && data.parsed.severities.length) {
+          container.innerHTML += `<span class="severity-pill sev-critical">Sev: ${data.parsed.severities.join(', ')}</span>`;
+        }
+        if (data.parsed.camera_ids && data.parsed.camera_ids.length) {
+          container.innerHTML += `<span class="severity-pill sev-low">Cam: ${data.parsed.camera_ids.join(', ')}</span>`;
+        }
+        if (data.parsed.plate) {
+          container.innerHTML += `<span class="severity-pill sev-critical">Plate: ${data.parsed.plate}</span>`;
+        }
+        if (data.parsed.keywords && data.parsed.keywords.length) {
+          container.innerHTML += `<span class="severity-pill sev-medium">Keywords: ${data.parsed.keywords.join(', ')}</span>`;
+        }
+        chipsBar.style.display = 'flex';
+
+        // Update event list with ranked search results
+        events = data.results.map(r => r.event);
+        renderEvents();
+      } catch (err) {
+        console.error('NL Search error:', err);
+      }
+    }
+
+    function clearNLSearch() {
+      document.getElementById('nlSearchInput').value = '';
+      document.getElementById('nlChipsBar').style.display = 'none';
+      fetchEvents();
+    }
+
+    async function generateIncidentReport() {
+      if (!currentSelectedEventId) return;
+      try {
+        const res = await fetch('/api/v1/reports/incident', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-API-Key': 'ibvap-c2-secure-api-key-default'
+          },
+          body: JSON.stringify({
+            event_id: currentSelectedEventId,
+            investigating_officer: 'Duty Operations Chief',
+            facility: 'Sector 4 Border Surveillance Post'
+          })
+        });
+        if (!res.ok) {
+          const err = await res.json();
+          alert('Report generation failed: ' + (err.detail || 'Unknown error'));
+          return;
+        }
+        const data = await res.json();
+        // Open report HTML in new tab
+        window.open(data.html_url, '_blank');
+      } catch (err) {
+        alert('Error generating report: ' + err);
+      }
+    }
+
+    // Enter key triggers search
+    document.getElementById('nlSearchInput').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') runNLSearch();
+    });
+
+    // Filter event listeners
+    document.getElementById('filterSeverity').onchange = renderEvents;
+    document.getElementById('filterCamera').onchange = renderEvents;
+    document.getElementById('filterType').onchange = renderEvents;
+    document.getElementById('searchInput').oninput = renderEvents;
+
+    window.onload = init;
+  </script>
+</body>
+</html>

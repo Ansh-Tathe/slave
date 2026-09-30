@@ -1,0 +1,57 @@
+# =============================================================================
+# ibvap/.gitignore
+# =============================================================================
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual envs
+.venv/
+venv/
+env/
+.env          # NEVER commit secrets
+
+# Models (large binary files — store in MinIO or a model registry)
+models/*.pt
+models/*.onnx
+models/*.engine
+models/*.trt
+models/*.bin
+models/paddleocr/
+
+# Data / videos (use download_samples.py to get them)
+data/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+
+# Coverage
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Build artifacts
+dashboard/build/
+dashboard/dist/
+dashboard/node_modules/
+
+# Docker
+*.pid

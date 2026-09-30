@@ -1,0 +1,144 @@
+version: "3.9"
+
+# =============================================================================
+# ibvap/docker-compose.yml
+# Development / single-node deployment.
+# For production multi-GPU, use docker-compose.override.yml with replicas.
+#
+# Usage:
+#   docker compose up -d postgres redis minio   # spin up services only
+#   docker compose up --build                   # build + run everything
+#   docker compose logs -f ibvap-api            # tail API logs
+# =============================================================================
+
+services:
+
+  # ── PostgreSQL — event store, audit log, user/session DB ──────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: ibvap_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ibvap
+      POSTGRES_USER: ibvap
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ibvap_dev_password}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init_db.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ibvap -d ibvap"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Redis — event bus, frame queue pub/sub, session cache ─────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: ibvap_redis
+    restart: unless-stopped
+    command: >
+      redis-server
+      --save 60 1
+      --loglevel warning
+      --maxmemory 1gb
+      --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── MinIO — object storage for clips, snapshots, evidence ─────────────────
+  minio:
+    image: minio/minio:latest
+    container_name: ibvap_minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-ibvap_admin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-ibvap_minio_secret}
+    volumes:
+      - minio_data:/data
+    ports:
+      - "9000:9000"    # S3 API
+      - "9001:9001"    # MinIO Console UI
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  # ── Analytics engine (P1+) — runs GPU inference ───────────────────────────
+  ibvap-engine:
+    build:
+      context: .
+      dockerfile: Dockerfile.engine
+    container_name: ibvap_engine
+    restart: unless-stopped
+    runtime: nvidia            # requires nvidia-container-toolkit
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility,video
+    volumes:
+      - ./configs:/app/configs:ro
+      - ./models:/app/models
+      - ./data:/app/data
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_started
+    profiles:
+      - full                   # only starts with: docker compose --profile full up
+
+  # ── FastAPI backend (P7+) ─────────────────────────────────────────────────
+  ibvap-api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: ibvap_api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    profiles:
+      - full
+
+  # ── React dashboard (P7+) ─────────────────────────────────────────────────
+  ibvap-dashboard:
+    build:
+      context: ./dashboard
+      dockerfile: Dockerfile
+    container_name: ibvap_dashboard
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      - ibvap-api
+    profiles:
+      - full
+
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:
+
+networks:
+  default:
+    name: ibvap_net

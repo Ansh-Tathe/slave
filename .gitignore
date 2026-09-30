@@ -1,0 +1,71 @@
+# =============================================================================
+# Root .gitignore for slave repository
+# =============================================================================
+
+# Virtual environments
+.venv/
+*/.venv/
+venv/
+env/
+ENV/
+
+# Python cache & build
+__pycache__/
+*/__pycache__/
+*/*/__pycache__/
+*/*/*/__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Models & Weights (large binary files)
+*.pt
+*.onnx
+*.engine
+*.trt
+*.bin
+models/paddleocr/
+**/models/*.pt
+**/models/*.onnx
+**/models/*.engine
+**/models/*.trt
+**/models/*.bin
+yolov8n.pt
+**/yolov8n.pt
+
+# Data / Videos / Snapshots / Logs
+data/
+**/data/
+logs/
+**/logs/
+*.log
+*.mp4
+*.avi
+*.mkv
+*.webm
+
+# Test & coverage
+.pytest_cache/
+*/.pytest_cache/
+.coverage
+htmlcov/
+
+# IDE & OS
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Secrets & Environment variables
+.env
+*/.env
+*.local

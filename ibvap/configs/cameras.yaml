@@ -1,0 +1,82 @@
+# =============================================================================
+# ibvap/configs/cameras.yaml
+# Camera source definitions.
+# Each camera entry is consumed by services/ingest/reader.py.
+# =============================================================================
+
+cameras:
+
+  # ── Example RTSP camera ───────────────────────────────────────────────────
+  - id: "cam_01"
+    name: "Main Gate — North"
+    enabled: true
+    source:                               # RTSP URL or local file path
+      type: rtsp                          # rtsp | file | usb
+      url: "rtsp://admin:password@192.168.1.100:554/stream1"
+      transport: tcp                      # tcp | udp (tcp is more reliable over WAN)
+      reconnect_delay_s: 5               # seconds to wait before auto-reconnect
+      reconnect_max_retries: -1          # -1 = retry forever
+    capture:
+      width: 1280
+      height: 720
+      fps: 25                            # source FPS (may be capped by ingest)
+      target_fps: 10                     # process every Nth frame (25/10 ≈ skip 1 in 2)
+    analytics:                           # which modules run on this camera
+      detect_track: true
+      fence: true
+      anpr: false
+      behaviour: true
+      face: false
+      night: false
+    zones_ref: "cam_01_zones"            # key in zones.yaml
+    meta:
+      location: "Main Gate"
+      direction: "inbound"
+      ptz: false
+
+  # ── Example file source (for testing) ─────────────────────────────────────
+  - id: "cam_test_file"
+    name: "Test — BigBuckBunny"
+    enabled: false                       # set true to use during development
+    source:
+      type: file
+      path: "data/samples/general/BigBuckBunny_360p.mp4"
+      loop: true                         # loop file when it ends
+    capture:
+      width: 640
+      height: 360
+      fps: 24
+      target_fps: 10
+    analytics:
+      detect_track: true
+      fence: false
+      anpr: false
+      behaviour: false
+      face: false
+      night: false
+    zones_ref: null
+    meta:
+      location: "Lab Test"
+
+  # ── USB / webcam ──────────────────────────────────────────────────────────
+  - id: "cam_usb_0"
+    name: "Laptop Webcam"
+    enabled: true
+    source:
+      type: usb
+      device_index: 0
+    capture:
+      width: 640
+      height: 480
+      fps: 30
+      target_fps: 15
+    analytics:
+      detect_track: true
+      fence: true
+      anpr: false
+      behaviour: true
+      face: true
+      night: false
+    zones_ref: "cam_usb_0_zones"
+    meta:
+      location: "Laptop Workstation"
