@@ -207,9 +207,11 @@ def main():
     parser.add_argument("--no-api", action="store_true", help="Disable dispatching events to web dashboard")
     parser.add_argument("--model", default="yolov8n.pt", help="YOLO model path (default: yolov8n.pt)")
     parser.add_argument("--threat-model", default="models/threat_yolov8n.pt", help="Threat model path")
-    parser.add_argument("--weapon-conf", type=float, default=0.35, help="Weapon confidence threshold (default: 0.35)")
+    parser.add_argument("--weapon-conf", type=float, default=0.20, help="Weapon confidence threshold (default: 0.20)")
     parser.add_argument("--no-weapons", action="store_true", help="Disable weapon detector")
     parser.add_argument("--zone", default="left", help="Restriction zone: 'left','right','center','full' or 'x1,y1,x2,y2'")
+    parser.add_argument("--fullscreen", action="store_true", default=True, help="Open camera feed in full screen mode (default: True)")
+    parser.add_argument("--windowed", dest="fullscreen", action="store_false", help="Open in standard windowed mode")
     args = parser.parse_args()
 
     print("=" * 76)
@@ -219,11 +221,13 @@ def main():
     print(f" * YOLO Person/Vehicle   : {args.model} (conf: {args.conf})")
     print(f" * Threat/Weapon Engine  : {'Disabled' if args.no_weapons else args.threat_model + f' (conf: {args.weapon_conf})'}")
     print(f" * Initial Zone Setting  : {args.zone}")
+    print(f" * Fullscreen Mode       : {'Active (F11/F to toggle)' if args.fullscreen else 'Windowed'}")
     print(f" * Dashboard Integration : {'Disabled' if args.no_api else 'Active (http://localhost:8000)'}")
     print(" * Hotkeys:")
-    print("     [z] : Toggle Interactive Mouse Zone Editor (drag on video feed)")
-    print("     [1] : Zone Left | [2] : Zone Right | [3] : Zone Center | [4] : Zone Full")
-    print("     [w] : Toggle Weapons | [f] : Toggle Fence | [s] : Snapshot | [q] : Quit")
+    print("     [f] / [F11] : Toggle Fullscreen")
+    print("     [z]         : Toggle Interactive Mouse Zone Editor (drag on video feed)")
+    print("     [1..4]      : Zone Left | Right | Center | Full")
+    print("     [w]         : Toggle Weapons | [v] : Toggle Fence | [s] : Snapshot | [q] : Quit")
     print("=" * 76)
 
     # 1. Open Webcam
@@ -263,6 +267,17 @@ def main():
             device=device,
             camera_id="cam_usb_0",
         )
+
+    # Masked Face Detector
+    mask_detector = None
+    mask_p = Path("models/mask_yolov8n.pt")
+    if mask_p.exists():
+        try:
+            from ultralytics import YOLO
+            mask_detector = YOLO(str(mask_p))
+            logger.info("Masked individual detector loaded (models/mask_yolov8n.pt)")
+        except Exception as e:
+            logger.warning(f"Could not load mask detector: {e}")
 
     # Restriction Zone & Tripwires
     current_zone_polygon = parse_zone_arg(args.zone)
@@ -344,7 +359,11 @@ def main():
     # Window setup
     window_name = "IBVAP — Laptop Webcam Surveillance Feed"
     cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
-    cv2.resizeWindow(window_name, min(1280, frame_w * 2), min(720, frame_h * 2))
+    is_fullscreen = bool(args.fullscreen)
+    if is_fullscreen:
+        cv2.setWindowProperty(window_name, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+    else:
+        cv2.resizeWindow(window_name, min(1280, frame_w * 2), min(720, frame_h * 2))
     cv2.setMouseCallback(window_name, mouse_callback)
 
     # Runtime state
@@ -409,6 +428,24 @@ def main():
                         for ev in active_events:
                             dispatch_event_to_api(ev)
 
+                # Mask Detection on tracked persons
+                masked_track_ids = set()
+                if mask_detector is not None:
+                    for t in tracks:
+                        if t.class_name == "person":
+                            x1, y1, x2, y2 = [int(v) for v in t.bbox]
+                            head_crop = frame[max(0, y1):min(frame_h, y1 + int((y2 - y1) * 0.45)), max(0, x1):min(frame_w, x2)]
+                            if head_crop.size > 0:
+                                try:
+                                    rm = mask_detector(head_crop, conf=0.15, verbose=False)[0]
+                                    for mb in rm.boxes:
+                                        m_cls = rm.names[int(mb.cls[0])]
+                                        if "bermasker" in m_cls.lower() and "tidak" not in m_cls.lower():
+                                            masked_track_ids.add(t.track_id)
+                                            break
+                                except Exception:
+                                    pass
+
                 # Periodic heartbeat to dashboard
                 if not args.no_api and (time.monotonic() - last_heartbeat_time > 2.0):
                     send_heartbeat_to_api(camera_id="cam_usb_0", fps=fps_estimate, frame_id=frame_id)
@@ -423,6 +460,13 @@ def main():
 
                 # Draw tracked objects
                 vis_frame = renderer.draw(vis_frame, tracks, frame_id=frame_id)
+
+                # Draw Mask Badges
+                for t in tracks:
+                    if t.track_id in masked_track_ids:
+                        tx1, ty1, tx2, ty2 = [int(v) for v in t.bbox]
+                        cv2.rectangle(vis_frame, (tx1, max(0, ty1 - 22)), (tx1 + 95, ty1), (0, 180, 255), -1)
+                        cv2.putText(vis_frame, "MASKED", (tx1 + 5, max(15, ty1 - 6)), cv2.FONT_HERSHEY_SIMPLEX, 0.48, (0, 0, 0), 2)
 
                 # Draw weapon / firearm detections
                 if enable_weapons and weapon_detector is not None and weapon_detections:
@@ -509,7 +553,14 @@ def main():
             elif key == ord("p"):
                 paused = not paused
                 logger.info("Paused" if paused else "Resumed")
-            elif key == ord("f"):
+            elif key in [ord("f"), ord("F")]:
+                is_fullscreen = not is_fullscreen
+                prop = cv2.WINDOW_FULLSCREEN if is_fullscreen else cv2.WINDOW_NORMAL
+                cv2.setWindowProperty(window_name, cv2.WND_PROP_FULLSCREEN, prop)
+                if not is_fullscreen:
+                    cv2.resizeWindow(window_name, min(1280, frame_w * 2), min(720, frame_h * 2))
+                logger.info(f"Fullscreen: {'ON' if is_fullscreen else 'OFF'}")
+            elif key == ord("v"):
                 show_fence = not show_fence
                 logger.info(f"Fence overlay: {'ON' if show_fence else 'OFF'}")
 

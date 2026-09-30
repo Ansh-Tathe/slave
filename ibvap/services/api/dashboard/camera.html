@@ -10,15 +10,14 @@
   <style>
     :root {
       --bg-dark: #070b13;
-      --bg-panel: rgba(14, 22, 38, 0.78);
+      --bg-panel: rgba(14, 22, 38, 0.82);
       --border-panel: rgba(255, 255, 255, 0.08);
       --border-hover: rgba(56, 189, 248, 0.35);
       --accent: #38bdf8;
       --accent-glow: rgba(56, 189, 248, 0.35);
       --critical: #ef4444;
       --critical-glow: rgba(239, 68, 68, 0.45);
-      --high: #f97316;
-      --medium: #f59e0b;
+      --warning: #f59e0b;
       --success: #10b981;
       --text-main: #f8fafc;
       --text-muted: #94a3b8;
@@ -44,8 +43,8 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 14px 28px;
-      background: rgba(8, 14, 24, 0.88);
+      padding: 12px 24px;
+      background: rgba(8, 14, 24, 0.92);
       backdrop-filter: blur(16px);
       border-bottom: 1px solid var(--border-panel);
       position: sticky;
@@ -74,7 +73,7 @@
     }
 
     .brand-title {
-      font-size: 19px;
+      font-size: 18px;
       font-weight: 700;
       letter-spacing: 0.3px;
     }
@@ -92,7 +91,7 @@
     .header-actions {
       display: flex;
       align-items: center;
-      gap: 14px;
+      gap: 12px;
     }
 
     .live-indicator {
@@ -126,7 +125,7 @@
       background: rgba(255, 255, 255, 0.06);
       border: 1px solid var(--border-panel);
       color: var(--text-main);
-      padding: 7px 15px;
+      padding: 7px 14px;
       border-radius: 8px;
       font-size: 13px;
       font-weight: 500;
@@ -161,48 +160,49 @@
       color: #fca5a5;
     }
 
-    .btn-danger:hover {
-      background: rgba(239, 68, 68, 0.35);
-      box-shadow: 0 0 14px var(--critical-glow);
+    .btn-fullscreen {
+      background: rgba(56, 189, 248, 0.15);
+      border-color: rgba(56, 189, 248, 0.4);
+      color: #7dd3fc;
+      font-weight: 600;
     }
 
-    /* Main Container */
+    .btn-fullscreen:hover {
+      background: rgba(56, 189, 248, 0.28);
+      color: #fff;
+    }
+
+    /* Main Grid */
     main {
       flex: 1;
+      padding: 18px 24px;
       display: grid;
-      grid-template-columns: 1fr 380px;
+      grid-template-columns: 1fr 340px;
       gap: 20px;
-      padding: 20px 28px;
-      max-width: 1700px;
+      max-width: 1720px;
       margin: 0 auto;
       width: 100%;
     }
 
-    @media (max-width: 1100px) {
-      main {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    /* Video Player Viewport */
+    /* Viewport Panel */
     .viewport-panel {
+      display: flex;
+      flex-direction: column;
       background: var(--bg-panel);
       border: 1px solid var(--border-panel);
       border-radius: 16px;
-      display: flex;
-      flex-direction: column;
       overflow: hidden;
-      backdrop-filter: blur(12px);
-      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(16px);
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.4);
     }
 
     .viewport-header {
-      padding: 12px 20px;
-      border-bottom: 1px solid var(--border-panel);
+      padding: 12px 18px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      background: rgba(255, 255, 255, 0.02);
+      background: rgba(10, 16, 28, 0.7);
+      border-bottom: 1px solid var(--border-panel);
     }
 
     .cam-meta {
@@ -212,7 +212,7 @@
     }
 
     .cam-name {
-      font-size: 15px;
+      font-size: 14px;
       font-weight: 600;
       letter-spacing: 0.3px;
     }
@@ -220,61 +220,121 @@
     .hud-tag {
       font-family: 'JetBrains Mono', monospace;
       font-size: 11px;
-      padding: 3px 8px;
+      padding: 2px 8px;
       border-radius: 4px;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1);
       color: var(--text-muted);
     }
 
+    /* Video Container & Canvas Overlay */
     .video-container {
       position: relative;
       width: 100%;
-      background: #000;
+      aspect-ratio: 16 / 9;
+      background: #020408;
+      overflow: hidden;
       display: flex;
       align-items: center;
       justify-content: center;
-      min-height: 480px;
-      overflow: hidden;
-      user-select: none;
     }
 
-    #streamImg {
+    /* Fullscreen styling for video container */
+    .video-container:fullscreen {
+      width: 100vw;
+      height: 100vh;
+      aspect-ratio: auto;
+      background: #000;
+      border-radius: 0;
+    }
+
+    .video-container:-webkit-full-screen {
+      width: 100vw;
+      height: 100vh;
+      aspect-ratio: auto;
+      background: #000;
+    }
+
+    #streamImg, #localVideo {
       width: 100%;
-      max-height: 640px;
+      height: 100%;
       object-fit: contain;
       display: block;
     }
 
     #localVideo {
-      width: 100%;
-      max-height: 640px;
-      object-fit: contain;
       display: none;
-      transform: scaleX(-1);
     }
 
-    /* Interactive Zone Drawing Canvas Overlay */
     #zoneCanvas {
       position: absolute;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
+      pointer-events: auto;
       cursor: crosshair;
-      z-index: 10;
     }
 
-    /* Live Video Controls Bar */
-    .viewport-controls {
-      padding: 14px 20px;
-      border-top: 1px solid var(--border-panel);
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: space-between;
+    /* Floating Alert Banner on Video */
+    .viewport-alert-banner {
+      position: absolute;
+      top: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(239, 68, 68, 0.92);
+      color: #fff;
+      padding: 8px 20px;
+      border-radius: 8px;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 700;
+      font-size: 13px;
+      letter-spacing: 0.5px;
+      display: none;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 0 24px rgba(239, 68, 68, 0.7);
+      z-index: 10;
+      animation: alertPulse 1.2s infinite;
+    }
+
+    @keyframes alertPulse {
+      0%, 100% { transform: translateX(-50%) scale(1); }
+      50% { transform: translateX(-50%) scale(1.03); }
+    }
+
+    /* Floating Fullscreen Controls */
+    .fullscreen-hud-bar {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(8, 14, 26, 0.88);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(16px);
+      padding: 8px 18px;
+      border-radius: 30px;
+      display: none;
       align-items: center;
       gap: 12px;
-      background: rgba(8, 14, 24, 0.5);
+      z-index: 20;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+    }
+
+    .video-container:fullscreen .fullscreen-hud-bar {
+      display: flex;
+    }
+
+    /* Viewport Bottom Controls */
+    .viewport-controls {
+      padding: 12px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(10, 16, 28, 0.7);
+      border-top: 1px solid var(--border-panel);
+      flex-wrap: wrap;
+      gap: 12px;
     }
 
     .controls-group {
@@ -285,17 +345,20 @@
 
     .zone-presets {
       display: flex;
-      align-items: center;
-      gap: 6px;
+      gap: 4px;
+      background: rgba(255, 255, 255, 0.04);
+      padding: 3px;
+      border-radius: 8px;
+      border: 1px solid var(--border-panel);
     }
 
     .zone-btn {
-      font-size: 12px;
-      padding: 5px 10px;
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid var(--border-panel);
+      background: transparent;
+      border: 1px solid transparent;
       color: var(--text-muted);
+      padding: 4px 10px;
       border-radius: 6px;
+      font-size: 11px;
       cursor: pointer;
       font-family: 'JetBrains Mono', monospace;
       transition: all 0.15s;
@@ -307,7 +370,7 @@
       color: #fff;
     }
 
-    /* Alert & Threat Feed Panel */
+    /* Sidebar: Alert & Threat Feed Panel */
     .sidebar-panel {
       display: flex;
       flex-direction: column;
@@ -322,15 +385,10 @@
       backdrop-filter: blur(12px);
     }
 
-    .threat-card.critical {
-      border-color: rgba(239, 68, 68, 0.5);
-      box-shadow: 0 0 24px rgba(239, 68, 68, 0.2);
-    }
-
     .card-header {
-      padding: 12px 18px;
+      padding: 12px 16px;
       border-bottom: 1px solid var(--border-panel);
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 600;
       display: flex;
       align-items: center;
@@ -338,18 +396,18 @@
     }
 
     .feed-list {
-      max-height: 480px;
+      max-height: 440px;
       overflow-y: auto;
       display: flex;
       flex-direction: column;
     }
 
     .feed-item {
-      padding: 12px 16px;
+      padding: 10px 14px;
       border-bottom: 1px solid rgba(255, 255, 255, 0.04);
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 4px;
       transition: background 0.15s;
       animation: fadeIn 0.3s ease-out;
     }
@@ -373,7 +431,7 @@
       font-size: 10px;
       font-weight: 700;
       font-family: 'JetBrains Mono', monospace;
-      padding: 2px 7px;
+      padding: 2px 6px;
       border-radius: 4px;
       letter-spacing: 0.5px;
     }
@@ -383,7 +441,7 @@
     .badge-medium { background: rgba(245, 158, 11, 0.25); color: #fde047; border: 1px solid #f59e0b; }
 
     .item-title {
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 600;
       color: #fff;
     }
@@ -394,30 +452,15 @@
       color: var(--text-muted);
     }
 
-    .item-weapon {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      font-size: 11px;
-      font-weight: 700;
-      color: #f87171;
-      background: rgba(239, 68, 68, 0.15);
-      border: 1px solid rgba(239, 68, 68, 0.3);
-      padding: 2px 6px;
-      border-radius: 4px;
-      margin-top: 4px;
-    }
-
-    /* Zone Info Box */
     .zone-info-card {
       background: var(--bg-panel);
       border: 1px solid var(--border-panel);
       border-radius: 14px;
-      padding: 16px;
-      font-size: 13px;
+      padding: 14px;
+      font-size: 12px;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 8px;
     }
 
     .info-row {
@@ -432,17 +475,16 @@
       font-weight: 600;
     }
 
-    /* Modal for snapshots */
     .snap-reel {
       display: flex;
       gap: 8px;
       overflow-x: auto;
-      padding: 8px 0;
+      padding: 4px 0;
     }
 
     .snap-thumb {
-      width: 70px;
-      height: 50px;
+      width: 65px;
+      height: 48px;
       border-radius: 6px;
       object-fit: cover;
       border: 1px solid var(--border-panel);
@@ -458,55 +500,73 @@
 </head>
 <body>
 
+  <!-- Header -->
   <header>
     <div class="brand">
       <div class="brand-logo">&#x1F6E1;</div>
       <div>
-        <div class="brand-title">IBVAP <span class="brand-badge">LIVE SURVEILLANCE</span></div>
+        <div class="brand-title">IBVAP <span class="brand-badge">LIVE SURVEILLANCE & THREAT AI</span></div>
       </div>
     </div>
 
     <div class="header-actions">
       <div class="live-indicator">
-        <div class="pulse-dot"></div>
-        <span id="connStatus">CONNECTING</span>
+        <div class="pulse-dot" id="pulseDot"></div>
+        <span id="connStatus">ONLINE</span>
       </div>
+      <button class="btn btn-fullscreen" onclick="toggleFullScreen()">&#x26F6; Fullscreen Camera</button>
       <a href="/dashboard" class="btn">&#x2190; Operations Dashboard</a>
-      <a href="/docs" target="_blank" class="btn">&#x1F4D6; API Docs</a>
+      <a href="/docs" target="_blank" class="btn">&#x1F4D6; Docs</a>
     </div>
   </header>
 
+  <!-- Main View -->
   <main>
     <!-- Viewport Panel -->
     <section class="viewport-panel">
       <div class="viewport-header">
         <div class="cam-meta">
-          <div class="cam-name">&#x1F4F9; Laptop Camera 0 (cam_usb_0)</div>
-          <span class="hud-tag" id="hudFps">FPS: --</span>
-          <span class="hud-tag" id="hudMode">MODE: SERVER AI STREAM</span>
+          <div class="cam-name">&#x1F4F9; Surveillance Camera 0 (cam_usb_0)</div>
+          <span class="hud-tag" id="hudFps">FPS: 0.0</span>
+          <span class="hud-tag" id="hudDetections">PERSONS: 0 | WEAPONS: 0</span>
+          <span class="hud-tag" id="hudMode">MODE: BROWSER AI WEBCAM</span>
         </div>
         <div class="controls-group">
-          <button class="btn" id="btnToggleSource" onclick="toggleCameraSource()">Switch to Browser Webcam</button>
-          <button class="btn btn-primary" id="btnSnapshot" onclick="captureSnapshot()">&#x1F4F7; Snapshot</button>
+          <button class="btn btn-primary" id="btnToggleSource" onclick="toggleCameraSource()">Switch to Server Stream</button>
+          <button class="btn" onclick="captureSnapshot()">&#x1F4F7; Snapshot</button>
         </div>
       </div>
 
       <!-- Video & Interactive Overlay -->
-      <div class="video-container" id="videoWrapper">
-        <!-- Server Stream -->
-        <img id="streamImg" src="/api/v1/cameras/cam_usb_0/stream" alt="Live Surveillance Stream" onerror="handleStreamError()" onload="handleStreamLoaded()" />
+      <div class="video-container" id="videoWrapper" ondblclick="toggleFullScreen()">
+        <!-- Live Alert Banner -->
+        <div class="viewport-alert-banner" id="viewportAlert">
+          <span>&#x26A0;&#xFE0F;</span> <span id="alertBannerText">RESTRICTED ZONE INTRUSION DETECTED</span>
+        </div>
+
+        <!-- Floating Fullscreen HUD -->
+        <div class="fullscreen-hud-bar">
+          <span style="font-weight: 700; font-size: 13px; color: #fff;">IBVAP FULLSCREEN</span>
+          <span class="hud-tag" id="fsFps">FPS: --</span>
+          <button class="btn btn-primary" onclick="captureSnapshot()">&#x1F4F7; Snap</button>
+          <button class="btn" onclick="toggleZoneDrawMode()">&#x270F;&#xFE0F; Draw Zone</button>
+          <button class="btn btn-danger" onclick="toggleFullScreen()">Exit Fullscreen [ESC]</button>
+        </div>
+
+        <!-- Server MJPEG Stream -->
+        <img id="streamImg" src="/api/v1/cameras/cam_usb_0/stream" alt="Live Surveillance Stream" style="display: none;" onerror="handleStreamError()" onload="handleStreamLoaded()" />
         
         <!-- Direct In-Browser Webcam Feed -->
         <video id="localVideo" autoplay playsinline muted></video>
 
-        <!-- HTML5 Canvas for Interactive Zone Editing -->
+        <!-- HTML5 Canvas for Detections and Zone Overlay -->
         <canvas id="zoneCanvas"></canvas>
       </div>
 
       <!-- Controls & Zone Presets -->
       <div class="viewport-controls">
         <div class="controls-group">
-          <span style="font-size: 13px; color: var(--text-muted); font-weight: 600;">RESTRICTION ZONE:</span>
+          <span style="font-size: 12px; color: var(--text-muted); font-weight: 600;">RESTRICTION ZONE:</span>
           <div class="zone-presets">
             <button class="zone-btn active" id="btnZoneLeft" onclick="setZonePreset('left')">LEFT</button>
             <button class="zone-btn" id="btnZoneRight" onclick="setZonePreset('right')">RIGHT</button>
@@ -517,7 +577,8 @@
 
         <div class="controls-group">
           <button class="btn" id="btnEditZone" onclick="toggleZoneDrawMode()">&#x270F;&#xFE0F; Drag-to-Draw Zone</button>
-          <button class="btn btn-primary" onclick="syncZoneToBackend()">&#x2714;&#xFE0F; Apply to Core</button>
+          <button class="btn btn-primary" onclick="syncZoneToBackend()">&#x2714;&#xFE0F; Apply Zone</button>
+          <button class="btn btn-fullscreen" onclick="toggleFullScreen()">&#x26F6; Fullscreen</button>
         </div>
       </div>
     </section>
@@ -532,39 +593,39 @@
         </div>
         <div class="feed-list" id="alertsFeed">
           <div style="padding: 24px 16px; text-align: center; color: var(--text-muted); font-size: 13px;">
-            Awaiting real-time intrusion and weapon alerts...
+            Awaiting real-time threats and intrusions...
           </div>
         </div>
       </div>
 
       <!-- Zone Coordinates Information -->
       <div class="zone-info-card">
-        <div style="font-weight: 600; font-size: 14px; margin-bottom: 4px;">&#x1F4D0; Active Restriction Zone Boundary</div>
+        <div style="font-weight: 600; font-size: 13px;">&#x1F4D0; Active Restriction Boundary</div>
         <div class="info-row">
           <span>Preset / Mode:</span>
           <span class="info-val" id="zonePresetName">LEFT SECTOR</span>
         </div>
         <div class="info-row">
-          <span>Coordinates (Norm):</span>
+          <span>Normalized Box:</span>
           <span class="info-val" id="zoneCoords">[0.05, 0.15] to [0.48, 0.85]</span>
         </div>
         <div class="info-row">
-          <span>Threat Detection:</span>
-          <span class="info-val" style="color: #4ade80;">FIREARMS & MELEE ACTIVE</span>
+          <span>Threat Engine:</span>
+          <span class="info-val" style="color: #4ade80;">FIREARMS, BLADES & MASKS ACTIVE</span>
         </div>
-        <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">
-          Tip: Click <b>Drag-to-Draw Zone</b>, then click and drag on the live camera display to set any customized restricted boundary.
+        <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px; line-height: 1.4;">
+          Tip: Press <b>F</b> or click <b>Fullscreen Camera</b> to expand full screen. Click <b>Drag-to-Draw Zone</b> to customize perimeter.
         </div>
       </div>
 
       <!-- Recent Snapshot Reel -->
       <div class="threat-card">
         <div class="card-header">
-          <span>&#x1F5BC;&#xFE0F; Captured Evidence Snaps</span>
+          <span>&#x1F5BC;&#xFE0F; Evidence Snapshots</span>
         </div>
-        <div style="padding: 12px;">
+        <div style="padding: 10px;">
           <div class="snap-reel" id="snapReel">
-            <span style="color: var(--text-muted); font-size: 12px;">No manual snapshots captured yet.</span>
+            <span style="color: var(--text-muted); font-size: 11px;">No manual snapshots captured yet.</span>
           </div>
         </div>
       </div>
@@ -573,7 +634,7 @@
 
   <script>
     // ── Application State ──────────────────────────────────────────────────────
-    let isLocalCam = false;
+    let isLocalCam = true; // Default to browser webcam for instant detection
     let localStream = null;
     let isDrawingZone = false;
     let dragStart = null;
@@ -582,69 +643,127 @@
     // Default normalized zone: Left (x1=0.05, y1=0.15, x2=0.48, y2=0.85)
     let currentNormZone = { x1: 0.05, y1: 0.15, x2: 0.48, y2: 0.85 };
 
+    // Active detections from server backend
+    let currentDetections = {
+      tracks: [],
+      weapons: [],
+      alerts: [],
+      width: 640,
+      height: 480,
+    };
+
+    let totalAlerts = 0;
+    let sseSource = null;
+    let detectionInFlight = false;
+    let frameCounter = 0;
+    let lastFpsTime = performance.now();
+    let currentFps = 0;
+
     const streamImg = document.getElementById("streamImg");
     const localVideo = document.getElementById("localVideo");
+    const videoWrapper = document.getElementById("videoWrapper");
     const zoneCanvas = document.getElementById("zoneCanvas");
     const ctx = zoneCanvas.getContext("2d");
     const connStatus = document.getElementById("connStatus");
     const hudMode = document.getElementById("hudMode");
     const hudFps = document.getElementById("hudFps");
+    const fsFps = document.getElementById("fsFps");
+    const hudDetections = document.getElementById("hudDetections");
     const alertsFeed = document.getElementById("alertsFeed");
     const alertCount = document.getElementById("alertCount");
     const snapReel = document.getElementById("snapReel");
     const btnEditZone = document.getElementById("btnEditZone");
+    const viewportAlert = document.getElementById("viewportAlert");
+    const alertBannerText = document.getElementById("alertBannerText");
 
-    let totalAlerts = 0;
-    let sseSource = null;
+    // Hidden offscreen canvas for capturing video frames to send to AI
+    const offCanvas = document.createElement("canvas");
+    const offCtx = offCanvas.getContext("2d");
 
-    // ── Resize Canvas to Match Video Container ─────────────────────────────────
+    // ── Fullscreen Support ────────────────────────────────────────────────────
+    function toggleFullScreen() {
+      if (!document.fullscreenElement) {
+        if (videoWrapper.requestFullscreen) {
+          videoWrapper.requestFullscreen();
+        } else if (videoWrapper.webkitRequestFullscreen) {
+          videoWrapper.webkitRequestFullscreen();
+        }
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        }
+      }
+    }
+
+    document.addEventListener("fullscreenchange", () => {
+      setTimeout(resizeCanvas, 100);
+    });
+
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "f" || e.key === "F") {
+        if (document.activeElement.tagName !== "INPUT") {
+          toggleFullScreen();
+        }
+      }
+    });
+
+    // ── Resize Canvas to Match Viewport ────────────────────────────────────────
     function resizeCanvas() {
-      const rect = zoneCanvas.parentElement.getBoundingClientRect();
-      zoneCanvas.width = rect.width;
-      zoneCanvas.height = rect.height;
-      drawZoneOverlay();
+      const rect = videoWrapper.getBoundingClientRect();
+      if (rect.width > 0 && rect.height > 0) {
+        zoneCanvas.width = rect.width;
+        zoneCanvas.height = rect.height;
+      }
     }
     window.addEventListener("resize", resizeCanvas);
 
-    // ── Draw Restriction Zone Canvas Overlay ──────────────────────────────────
-    function drawZoneOverlay() {
+    // ── Point In Normalized Polygon ───────────────────────────────────────────
+    function isPointInNormZone(nx, ny) {
+      const z = currentNormZone;
+      return (nx >= z.x1 && nx <= z.x2 && ny >= z.y1 && ny <= z.y2);
+    }
+
+    // ── Canvas Rendering Engine (Zones + Persons + Weapons + Masks) ─────────────
+    function renderOverlay() {
       ctx.clearRect(0, 0, zoneCanvas.width, zoneCanvas.height);
       const w = zoneCanvas.width;
       const h = zoneCanvas.height;
+      if (w === 0 || h === 0) return;
 
       const px1 = currentNormZone.x1 * w;
       const py1 = currentNormZone.y1 * h;
       const px2 = currentNormZone.x2 * w;
       const py2 = currentNormZone.y2 * h;
-
       const zw = px2 - px1;
       const zh = py2 - py1;
 
-      // Filled semi-transparent restricted zone
-      ctx.fillStyle = "rgba(239, 68, 68, 0.18)";
+      // 1. Draw Restriction Zone
+      const anyIntruder = currentDetections.tracks.some(t => t.in_zone);
+      ctx.fillStyle = anyIntruder ? "rgba(239, 68, 68, 0.28)" : "rgba(239, 68, 68, 0.16)";
       ctx.fillRect(px1, py1, zw, zh);
 
-      // Glowing border
-      ctx.strokeStyle = "#ef4444";
-      ctx.lineWidth = 2;
+      ctx.strokeStyle = anyIntruder ? "#ef4444" : "rgba(239, 68, 68, 0.85)";
+      ctx.lineWidth = anyIntruder ? 3 : 2;
+      ctx.setLineDash([8, 6]);
       ctx.strokeRect(px1, py1, zw, zh);
+      ctx.setLineDash([]);
 
-      // Corner handles
-      ctx.fillStyle = "#f87171";
-      const cs = 7;
+      // Corner markers
+      ctx.fillStyle = "#ef4444";
+      const cs = 8;
       ctx.fillRect(px1 - cs/2, py1 - cs/2, cs, cs);
       ctx.fillRect(px2 - cs/2, py1 - cs/2, cs, cs);
       ctx.fillRect(px2 - cs/2, py2 - cs/2, cs, cs);
       ctx.fillRect(px1 - cs/2, py2 - cs/2, cs, cs);
 
-      // Label banner
-      ctx.fillStyle = "rgba(239, 68, 68, 0.85)";
+      // Zone Label
+      ctx.fillStyle = anyIntruder ? "#ef4444" : "rgba(239, 68, 68, 0.9)";
       ctx.fillRect(px1, Math.max(0, py1 - 22), 160, 22);
       ctx.fillStyle = "#ffffff";
       ctx.font = "bold 11px Outfit, sans-serif";
-      ctx.fillText("RESTRICTED ZONE", px1 + 8, Math.max(14, py1 - 6));
+      ctx.fillText(anyIntruder ? "⚠️ ZONE INTRUSION" : "RESTRICTED ZONE", px1 + 8, Math.max(15, py1 - 6));
 
-      // Draw active dragging box preview
+      // 2. Draw Active Mouse Drag Preview
       if (dragStart && dragCurrent) {
         const dx = Math.min(dragStart.x, dragCurrent.x);
         const dy = Math.min(dragStart.y, dragCurrent.y);
@@ -656,11 +775,216 @@
         ctx.setLineDash([6, 4]);
         ctx.strokeRect(dx, dy, dw, dh);
         ctx.setLineDash([]);
-
-        ctx.fillStyle = "rgba(234, 179, 8, 0.2)";
+        ctx.fillStyle = "rgba(234, 179, 8, 0.25)";
         ctx.fillRect(dx, dy, dw, dh);
       }
+
+      // 3. Draw Detected Persons (Tracks)
+      const scaleX = w / (currentDetections.width || 640);
+      const scaleY = h / (currentDetections.height || 480);
+
+      let activeArmedCount = 0;
+      let activeMaskedCount = 0;
+
+      for (const t of currentDetections.tracks) {
+        if (!t.bbox) continue;
+        const [bx1, by1, bx2, by2] = t.bbox;
+        const x = bx1 * scaleX;
+        const y = by1 * scaleY;
+        const bw = (bx2 - bx1) * scaleX;
+        const bh = (by2 - by1) * scaleY;
+
+        const isArmed = t.is_armed;
+        const isMasked = t.is_masked;
+        const inZone = t.in_zone;
+
+        if (isArmed) activeArmedCount++;
+        if (isMasked) activeMaskedCount++;
+
+        // Color coding: Red for Intruder / Armed, Yellow for Masked, Green/Cyan for Regular Person
+        let strokeColor = "#10b981";
+        if (isArmed || inZone) strokeColor = "#ef4444";
+        else if (isMasked) strokeColor = "#f59e0b";
+
+        ctx.strokeStyle = strokeColor;
+        ctx.lineWidth = (isArmed || inZone) ? 3 : 2;
+        ctx.strokeRect(x, y, bw, bh);
+
+        // Corner accents
+        const cl = Math.min(18, bw / 4);
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        // Top-left
+        ctx.moveTo(x, y + cl); ctx.lineTo(x, y); ctx.lineTo(x + cl, y);
+        // Top-right
+        ctx.moveTo(x + bw - cl, y); ctx.lineTo(x + bw, y); ctx.lineTo(x + bw, y + cl);
+        // Bottom-left
+        ctx.moveTo(x, y + bh - cl); ctx.lineTo(x, y + bh); ctx.lineTo(x + cl, y + bh);
+        // Bottom-right
+        ctx.moveTo(x + bw - cl, y + bh); ctx.lineTo(x + bw, y + bh); ctx.lineTo(x + bw, y + bh - cl);
+        ctx.stroke();
+
+        // Label Badge
+        const confPct = Math.round((t.conf || 0.8) * 100);
+        let label = `PERSON #${t.track_id} (${confPct}%)`;
+        if (inZone) label = `🚨 INTRUDER #${t.track_id} (${confPct}%)`;
+        if (isArmed) label = `🚨 ARMED #${t.track_id} [${(t.weapon || 'GUN').toUpperCase()}]`;
+
+        ctx.font = "bold 12px Outfit, sans-serif";
+        const textWidth = ctx.measureText(label).width;
+        ctx.fillStyle = strokeColor;
+        ctx.fillRect(x, Math.max(0, y - 22), textWidth + 14, 22);
+        ctx.fillStyle = "#ffffff";
+        ctx.fillText(label, x + 7, Math.max(15, y - 6));
+
+        // Masked badge above head
+        if (isMasked) {
+          const mLabel = "😷 CONCEALED FACE / MASK";
+          ctx.font = "bold 11px Outfit, sans-serif";
+          const mWidth = ctx.measureText(mLabel).width;
+          ctx.fillStyle = "#f59e0b";
+          ctx.fillRect(x, Math.max(0, y - 44), mWidth + 12, 20);
+          ctx.fillStyle = "#000000";
+          ctx.fillText(mLabel, x + 6, Math.max(14, y - 30));
+        }
+      }
+
+      // 4. Draw Weapons
+      for (const wpn of currentDetections.weapons) {
+        if (!wpn.bbox) continue;
+        const [wx1, wy1, wx2, wy2] = wpn.bbox;
+        const x = wx1 * scaleX;
+        const y = wy1 * scaleY;
+        const bw = (wx2 - wx1) * scaleX;
+        const bh = (wy2 - wy1) * scaleY;
+
+        ctx.strokeStyle = "#dc2626";
+        ctx.lineWidth = 3;
+        ctx.strokeRect(x, y, bw, bh);
+
+        // Crosshairs in weapon box
+        ctx.beginPath();
+        ctx.moveTo(x + bw/2 - 6, y + bh/2); ctx.lineTo(x + bw/2 + 6, y + bh/2);
+        ctx.moveTo(x + bw/2, y + bh/2 - 6); ctx.lineTo(x + bw/2, y + bh/2 + 6);
+        ctx.stroke();
+
+        const wLabel = `⚠️ DANGER: ${wpn.class_name.toUpperCase()} (${Math.round((wpn.conf || 0.8)*100)}%)`;
+        ctx.font = "bold 11px Outfit, sans-serif";
+        const wWidth = ctx.measureText(wLabel).width;
+        ctx.fillStyle = "#dc2626";
+        ctx.fillRect(x, Math.max(0, y - 22), wWidth + 12, 22);
+        ctx.fillStyle = "#ffffff";
+        ctx.fillText(wLabel, x + 6, Math.max(15, y - 6));
+      }
+
+      // 5. Update Viewport Alert Banner
+      const armedAlert = currentDetections.weapons.length > 0 || currentDetections.tracks.some(t => t.is_armed);
+      const zoneAlert = currentDetections.tracks.some(t => t.in_zone);
+      const maskAlert = currentDetections.tracks.some(t => t.is_masked);
+
+      if (armedAlert) {
+        viewportAlert.style.display = "flex";
+        viewportAlert.style.background = "rgba(220, 38, 38, 0.95)";
+        alertBannerText.innerText = "🚨 CRITICAL: ARMED WEAPON THREAT DETECTED IN PERIMETER!";
+      } else if (zoneAlert) {
+        viewportAlert.style.display = "flex";
+        viewportAlert.style.background = "rgba(239, 68, 68, 0.92)";
+        alertBannerText.innerText = "⚠️ SECURITY BREACH: PERSON IN RESTRICTED PERIMETER!";
+      } else if (maskAlert) {
+        viewportAlert.style.display = "flex";
+        viewportAlert.style.background = "rgba(245, 158, 11, 0.95)";
+        alertBannerText.innerText = "😷 ATTENTION: CONCEALED / MASKED INDIVIDUAL DETECTED!";
+      } else {
+        viewportAlert.style.display = "none";
+      }
+
+      // 6. Update HUD Stats
+      hudDetections.innerText = `PERSONS: ${currentDetections.tracks.length} | WEAPONS: ${currentDetections.weapons.length}`;
     }
+
+    // ── Real-Time Client-Side Frame Ingestion & AI Detection Loop ─────────────
+    async function runDetectionCycle() {
+      if (detectionInFlight) return;
+
+      const videoEl = isLocalCam ? localVideo : streamImg;
+      const vw = videoEl.videoWidth || videoEl.naturalWidth;
+      const vh = videoEl.videoHeight || videoEl.naturalHeight;
+
+      if (!vw || !vh || videoEl.readyState < 2) return;
+
+      detectionInFlight = true;
+      try {
+        // Capture frame onto offscreen canvas (scaled to max 640 for speed)
+        const targetW = 640;
+        const targetH = Math.round((vh / vw) * targetW);
+        offCanvas.width = targetW;
+        offCanvas.height = targetH;
+        offCtx.drawImage(videoEl, 0, 0, targetW, targetH);
+
+        // Convert to blob and send to backend
+        const blob = await new Promise(res => offCanvas.toBlob(res, "image/jpeg", 0.75));
+        if (blob) {
+          const res = await fetch("/api/v1/cameras/cam_usb_0/detect_frame", {
+            method: "POST",
+            headers: { "Content-Type": "image/jpeg" },
+            body: blob,
+          });
+
+          if (res.ok) {
+            const data = await res.json();
+            currentDetections = data;
+
+            // Recalculate in_zone according to client-drawn zone
+            for (const t of currentDetections.tracks) {
+              if (t.bbox) {
+                const [x1, y1, x2, y2] = t.bbox;
+                const footNx = ((x1 + x2) / 2) / (data.width || 640);
+                const footNy = y2 / (data.height || 480);
+                const centerNy = ((y1 + y2) / 2) / (data.height || 480);
+                if (isPointInNormZone(footNx, footNy) || isPointInNormZone(footNx, centerNy)) {
+                  t.in_zone = true;
+                }
+              }
+            }
+
+            // Ingest any active alerts into the sidebar feed
+            if (data.alerts && data.alerts.length > 0) {
+              for (const a of data.alerts) {
+                addAlertItem({
+                  event_type: a.type,
+                  severity: a.severity,
+                  camera_id: "cam_usb_0",
+                  metadata: { weapon: a.message },
+                });
+              }
+            }
+          }
+        }
+      } catch (err) {
+        console.warn("Detection cycle exception:", err);
+      } finally {
+        detectionInFlight = false;
+        frameCounter++;
+        const now = performance.now();
+        if (now - lastFpsTime >= 1000) {
+          currentFps = (frameCounter * 1000 / (now - lastFpsTime)).toFixed(1);
+          hudFps.innerText = `FPS: ${currentFps}`;
+          fsFps.innerText = `FPS: ${currentFps}`;
+          frameCounter = 0;
+          lastFpsTime = now;
+        }
+      }
+    }
+
+    // Main animation loop
+    function animationLoop() {
+      renderOverlay();
+      requestAnimationFrame(animationLoop);
+    }
+    requestAnimationFrame(animationLoop);
+
+    // AI detection interval (~9-10 FPS)
+    setInterval(runDetectionCycle, 110);
 
     // ── Mouse Drag Zone Drawing ───────────────────────────────────────────────
     function toggleZoneDrawMode() {
@@ -681,14 +1005,12 @@
       const rect = zoneCanvas.getBoundingClientRect();
       dragStart = { x: e.clientX - rect.left, y: e.clientY - rect.top };
       dragCurrent = { ...dragStart };
-      drawZoneOverlay();
     });
 
     zoneCanvas.addEventListener("mousemove", (e) => {
       if (!dragStart) return;
       const rect = zoneCanvas.getBoundingClientRect();
       dragCurrent = { x: e.clientX - rect.left, y: e.clientY - rect.top };
-      drawZoneOverlay();
     });
 
     zoneCanvas.addEventListener("mouseup", (e) => {
@@ -725,7 +1047,6 @@
       btnEditZone.style.background = "";
       btnEditZone.style.color = "";
       btnEditZone.innerText = "✏️ Drag-to-Draw Zone";
-      drawZoneOverlay();
     });
 
     // ── Zone Presets ──────────────────────────────────────────────────────────
@@ -752,7 +1073,6 @@
       document.getElementById("zoneCoords").innerText = 
         `[${currentNormZone.x1.toFixed(2)}, ${currentNormZone.y1.toFixed(2)}] to [${currentNormZone.x2.toFixed(2)}, ${currentNormZone.y2.toFixed(2)}]`;
 
-      drawZoneOverlay();
       syncZoneToBackend();
     }
 
@@ -766,66 +1086,69 @@
       ];
 
       try {
-        const res = await fetch("/api/v1/cameras/cam_usb_0/zone", {
+        await fetch("/api/v1/cameras/cam_usb_0/zone", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ polygon }),
         });
-        if (res.ok) {
-          console.log("Restriction zone updated on core engine:", polygon);
-        }
       } catch (err) {
         console.warn("Could not sync zone with backend:", err);
       }
     }
 
-    // ── Toggle Source: Server AI Stream vs Direct In-Browser Webcam ───────────
-    async function toggleCameraSource() {
-      const btn = document.getElementById("btnToggleSource");
-      if (!isLocalCam) {
-        // Activate Local Browser Webcam
-        try {
-          localStream = await navigator.mediaDevices.getUserMedia({
-            video: { width: { ideal: 1280 }, height: { ideal: 720 } },
-          });
-          localVideo.srcObject = localStream;
-          localVideo.style.display = "block";
-          streamImg.style.display = "none";
-          isLocalCam = true;
-          btn.innerText = "Switch to Server AI Stream";
-          hudMode.innerText = "MODE: DIRECT BROWSER WEBCAM";
-          connStatus.innerText = "LOCAL WEBCAM ACTIVE";
-          resizeCanvas();
-        } catch (err) {
-          alert("Cannot access webcam from browser: " + err.message);
-        }
-      } else {
-        // Switch back to Server AI Stream
-        if (localStream) {
-          localStream.getTracks().forEach(t => t.stop());
-          localStream = null;
-        }
-        localVideo.style.display = "none";
-        streamImg.style.display = "block";
-        streamImg.src = "/api/v1/cameras/cam_usb_0/stream?t=" + Date.now();
-        isLocalCam = false;
-        btn.innerText = "Switch to Browser Webcam";
-        hudMode.innerText = "MODE: SERVER AI STREAM";
-        connStatus.innerText = "SERVER STREAM ONLINE";
+    // ── Toggle Source: Server AI Stream vs Direct Browser Webcam ──────────────
+    async function startBrowserWebcam() {
+      try {
+        localStream = await navigator.mediaDevices.getUserMedia({
+          video: { width: { ideal: 1280 }, height: { ideal: 720 } },
+        });
+        localVideo.srcObject = localStream;
+        localVideo.style.display = "block";
+        streamImg.style.display = "none";
+        isLocalCam = true;
+        document.getElementById("btnToggleSource").innerText = "Switch to Server Stream";
+        hudMode.innerText = "MODE: BROWSER AI WEBCAM";
+        connStatus.innerText = "WEBCAM AI ONLINE";
         resizeCanvas();
+      } catch (err) {
+        console.warn("Browser webcam access error:", err);
+        // Fallback to server stream
+        switchToStream();
+      }
+    }
+
+    function switchToStream() {
+      if (localStream) {
+        localStream.getTracks().forEach(t => t.stop());
+        localStream = null;
+      }
+      localVideo.style.display = "none";
+      streamImg.style.display = "block";
+      streamImg.src = "/api/v1/cameras/cam_usb_0/stream?t=" + Date.now();
+      isLocalCam = false;
+      document.getElementById("btnToggleSource").innerText = "Switch to Browser Webcam";
+      hudMode.innerText = "MODE: SERVER AI STREAM";
+      connStatus.innerText = "SERVER STREAM ONLINE";
+      resizeCanvas();
+    }
+
+    async function toggleCameraSource() {
+      if (isLocalCam) {
+        switchToStream();
+      } else {
+        await startBrowserWebcam();
       }
     }
 
     function handleStreamLoaded() {
       connStatus.innerText = "AI STREAM ONLINE";
-      hudFps.innerText = "FPS: 15.0";
       resizeCanvas();
     }
 
     function handleStreamError() {
-      connStatus.innerText = "WAITING FOR PIPELINE";
-      connStatus.style.color = "#f59e0b";
-      resizeCanvas();
+      if (!isLocalCam) {
+        connStatus.innerText = "STREAM OFFLINE";
+      }
     }
 
     // ── Snapshot Capture ──────────────────────────────────────────────────────
@@ -841,7 +1164,6 @@
 
       const dataUrl = snapCanvas.toDataURL("image/jpeg", 0.9);
 
-      // Append to reel
       if (snapReel.querySelector("span")) {
         snapReel.innerHTML = "";
       }
@@ -861,10 +1183,6 @@
     // ── Real-Time SSE Alert Consumer ──────────────────────────────────────────
     function connectSSE() {
       sseSource = new EventSource("/api/v1/events/stream");
-
-      sseSource.onopen = () => {
-        console.log("Connected to IBVAP Live Alert Stream (SSE)");
-      };
 
       sseSource.onmessage = (e) => {
         try {
@@ -892,13 +1210,13 @@
       const item = document.createElement("div");
       item.className = "feed-item";
 
-      const sev = (ev.severity || "MEDIUM").toUpperCase();
+      const sev = (ev.severity || "HIGH").toUpperCase();
       const sevClass = sev === "CRITICAL" ? "badge-critical" : (sev === "HIGH" ? "badge-high" : "badge-medium");
 
       let weaponTag = "";
       if (ev.event_type === "ARMED_PERSON" || ev.event_type === "WEAPON_DETECTED" || ev.metadata?.weapon) {
-        const wName = (ev.metadata?.weapon || "FIREARM").toUpperCase();
-        weaponTag = `<div class="item-weapon">⚠️ ARMED TARGET: ${wName}</div>`;
+        const wName = (ev.metadata?.weapon || "THREAT").toUpperCase();
+        weaponTag = `<div style="font-size:11px;font-weight:700;color:#f87171;margin-top:2px;">⚠️ ${wName}</div>`;
       }
 
       const timeStr = new Date(ev.timestamp ? ev.timestamp * 1000 : Date.now()).toLocaleTimeString();
@@ -908,24 +1226,25 @@
           <span class="badge-sev ${sevClass}">${sev}</span>
           <span class="item-meta">${timeStr}</span>
         </div>
-        <div class="item-title">${ev.event_type} — Track #${ev.track_id || (ev.track?.track_id ?? 'Perimeter')}</div>
-        <div class="item-meta">Zone: ${ev.zone_id || 'perimeter'} | Cam: ${ev.camera_id}</div>
+        <div class="item-title">${ev.event_type} — Target #${ev.track_id || 1}</div>
+        <div class="item-meta">Zone: ${ev.zone_id || 'restricted'} | Cam: ${ev.camera_id}</div>
         ${weaponTag}
       `;
 
       alertsFeed.prepend(item);
 
-      // Keep max 25 items in DOM
       if (alertsFeed.children.length > 25) {
         alertsFeed.removeChild(alertsFeed.lastChild);
       }
     }
 
-    // Initial setup
-    window.onload = () => {
+    // ── Initialize on Page Load ───────────────────────────────────────────────
+    window.addEventListener("load", async () => {
       resizeCanvas();
       connectSSE();
-    };
+      // Start local webcam for instant detection
+      await startBrowserWebcam();
+    });
   </script>
 </body>
 </html>

@@ -48,6 +48,9 @@ logs/
 htmlcov/
 .pytest_cache/
 
+# Training runs
+runs/
+
 # Build artifacts
 dashboard/build/
 dashboard/dist/

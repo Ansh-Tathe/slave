@@ -1,111 +1,112 @@
-# =============================================================================
-# ibvap/configs/zones.yaml
-# Virtual fence zones and tripwire lines per camera.
-# Consumed by services/analytics/fence/ in P2.
-#
-# Coordinate system: normalised [0,1] x [0,1] relative to frame width/height.
-# This makes zones resolution-independent.
-# =============================================================================
-
 zones:
-
-  # ── Zones for cam_01 ──────────────────────────────────────────────────────
   cam_01_zones:
-
-    # -- Polygon (closed area) — triggers alert when a tracked object ENTERS --
     polygons:
-      - id: "zone_restricted_north"
-        name: "Restricted Northern Perimeter"
-        enabled: true
-        # Points listed clockwise (normalised x,y)
-        points:
-          - [0.0, 0.0]
-          - [1.0, 0.0]
-          - [1.0, 0.35]
-          - [0.0, 0.35]
-        triggers:
-          on_enter: true          # alert when object enters polygon
-          on_exit: false
-          dwell_seconds: 5        # alert if object stays > 5s (loitering)
-          classes:                # which COCO classes to monitor
-            - person
-            - motorcycle
-            - car
-            - truck
-        severity: HIGH
-
-      - id: "zone_vehicle_bay"
-        name: "Vehicle Inspection Bay"
-        enabled: true
-        points:
-          - [0.4, 0.6]
-          - [0.9, 0.6]
-          - [0.9, 1.0]
-          - [0.4, 1.0]
-        triggers:
-          on_enter: true
-          on_exit: true
-          dwell_seconds: 120      # vehicle loitering > 2 min
-          classes:
-            - car
-            - truck
-            - bus
-            - motorcycle
-        severity: MEDIUM
-
-    # -- Tripwire lines — triggers alert when object CROSSES the line --
+    - id: zone_restricted_north
+      name: Restricted Northern Perimeter
+      enabled: true
+      points:
+      - - 0.0
+        - 0.0
+      - - 1.0
+        - 0.0
+      - - 1.0
+        - 0.35
+      - - 0.0
+        - 0.35
+      triggers:
+        on_enter: true
+        on_exit: false
+        dwell_seconds: 5
+        classes:
+        - person
+        - motorcycle
+        - car
+        - truck
+      severity: HIGH
+    - id: zone_vehicle_bay
+      name: Vehicle Inspection Bay
+      enabled: true
+      points:
+      - - 0.4
+        - 0.6
+      - - 0.9
+        - 0.6
+      - - 0.9
+        - 1.0
+      - - 0.4
+        - 1.0
+      triggers:
+        on_enter: true
+        on_exit: true
+        dwell_seconds: 120
+        classes:
+        - car
+        - truck
+        - bus
+        - motorcycle
+      severity: MEDIUM
     tripwires:
-      - id: "wire_border_line"
-        name: "Border Line"
-        enabled: true
-        # Line defined by two normalised points
-        start: [0.0, 0.5]
-        end:   [1.0, 0.5]
-        direction: both           # both | north_to_south | south_to_north
-        classes:
-          - person
-          - motorcycle
-          - car
-          - truck
-        severity: CRITICAL
-
-      - id: "wire_exit_gate"
-        name: "Exit Gate"
-        enabled: true
-        start: [0.6, 0.0]
-        end:   [0.6, 0.5]
-        direction: east_to_west   # wrong-way crossing (vehicles leaving wrong gate)
-        classes:
-          - car
-          - truck
-        severity: HIGH
-
-  # ── Laptop Webcam Zones ───────────────────────────────────────────────────
+    - id: wire_border_line
+      name: Border Line
+      enabled: true
+      start:
+      - 0.0
+      - 0.5
+      end:
+      - 1.0
+      - 0.5
+      direction: both
+      classes:
+      - person
+      - motorcycle
+      - car
+      - truck
+      severity: CRITICAL
+    - id: wire_exit_gate
+      name: Exit Gate
+      enabled: true
+      start:
+      - 0.6
+      - 0.0
+      end:
+      - 0.6
+      - 0.5
+      direction: east_to_west
+      classes:
+      - car
+      - truck
+      severity: HIGH
   cam_usb_0_zones:
     polygons:
-      - id: "restricted_left"
-        name: "Restricted Left Sector"
-        enabled: true
-        points:
-          - [0.05, 0.15]
-          - [0.45, 0.15]
-          - [0.45, 0.85]
-          - [0.05, 0.85]
-        triggers:
-          on_enter: true
-          dwell_seconds: 3.0
-          classes:
-            - person
-        severity: HIGH
-
-    tripwires:
-      - id: "tripwire_center"
-        name: "Perimeter Center Line"
-        enabled: true
-        start: [0.55, 0.10]
-        end:   [0.55, 0.90]
-        direction: both
+    - id: restricted_left
+      name: Restricted Left Sector
+      enabled: true
+      points:
+      - - 0.014100184467152894
+        - 0.11541665395100911
+      - - 0.25807049986603975
+        - 0.11541665395100911
+      - - 0.25807049986603975
+        - 0.9404166539510092
+      - - 0.014100184467152894
+        - 0.9404166539510092
+      triggers:
+        on_enter: true
+        dwell_seconds: 3.0
         classes:
-          - person
-        severity: CRITICAL
-
+        - person
+      severity: HIGH
+    tripwires:
+    - id: tripwire_center
+      name: Perimeter Center Line
+      enabled: true
+      start:
+      - 0.55
+      - 0.1
+      end:
+      - 0.55
+      - 0.9
+      direction: both
+      classes:
+      - person
+      severity: CRITICAL
